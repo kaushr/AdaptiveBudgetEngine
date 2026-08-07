@@ -34,6 +34,12 @@ st.markdown(f"""<style>
 .dbe-card-value {{ font-size: 2.4rem; font-weight: 700; color: #fff; line-height: 1.15; }}
 .dbe-card-sub {{ font-size: .85rem; color: rgba(255,255,255,.78); }}
 .dbe-action {{ font-size: 1.35rem; font-weight: 650; line-height: 1.35; min-height: 4.6em; }}
+.dbe-chip {{ display: inline-block; padding: 2px 10px; border-radius: 12px;
+             font-size: .8rem; margin: 2px 6px 2px 0; white-space: nowrap; }}
+.dbe-chip.on {{ background: rgba(59,130,246,.22); border: 1px solid rgba(59,130,246,.55); }}
+.dbe-chip.off {{ color: {MUTED}; background: rgba(154,164,178,.10);
+                 border: 1px solid rgba(154,164,178,.25); }}
+.dbe-chip.meta {{ background: rgba(154,164,178,.16); border: 1px solid rgba(154,164,178,.35); }}
 </style>""", unsafe_allow_html=True)
 
 RESULTS_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "results"))
@@ -81,6 +87,29 @@ def md_usd(v, dec=4):
 
 def md_amount(v):
     return fmt_amount(v).replace("$", "\\$")
+
+
+def _b(v):
+    """CSV booleans arrive as TRUE/FALSE strings or real bools by source."""
+    return v if isinstance(v, bool) else str(v).upper() == "TRUE"
+
+
+# The seven risk signals behind the Decision Complexity Score, in canonical
+# order: (column, chip label, drill-down abbreviation)
+RISK_SIGNALS = [
+    ("no_economic_buyer", "no economic buyer", "buyer"),
+    ("competitor_present", "competitor", "comp"),
+    ("security_legal_blocked", "security/legal", "sec"),
+    ("procurement_not_started", "procurement not started", "proc"),
+    ("champion_risk", "champion risk", "champ"),
+    ("inactive_21d", "inactive >21d", "inact"),
+    ("conflicting_signals", "conflicting signals", "confl"),
+]
+
+COMPLEXITY_DEF = ("Complexity score = count of active risk signals (0–7) — no economic "
+                  "buyer, competitor, security/legal block, procurement not started, "
+                  "champion departed, inactivity >21d, conflicting signals. "
+                  "Deterministic; no model involved.")
 
 
 st.title("Decision Budget Engine")
@@ -157,6 +186,7 @@ st.info(
     f"**{pin_now.tier}**. Probable and messy at the same time: certainty vetoes spend once "
     f"the bar loosens, no matter how complex the record looks. Deal size never enters the rule."
 )
+st.caption(COMPLEXITY_DEF)
 
 # ---- Beat 1 content (needs the slider's operating point) -------------------
 with beat1:
@@ -194,6 +224,20 @@ h = heroes[heroes.kind == kind].iloc[0]
 
 st.markdown(f"**{h['opp_id']} — {h['name']}** · {md_amount(h.amount)} · "
             f"p={h.probability} · complexity {h.complexity_score}")
+
+# Full attribute set: the seven risk signals as chips (lit = active, so the
+# complexity score is visibly the count of lit chips) plus stage/strategic.
+opp_full = data["opportunities"].set_index("opp_id").loc[h["opp_id"]]
+chips = "".join(
+    f"<span class='dbe-chip {'on' if _b(opp_full[col]) else 'off'}'>"
+    f"{'✓ ' if _b(opp_full[col]) else ''}{label}</span>"
+    for col, label, _ in RISK_SIGNALS)
+chips += (f"<span class='dbe-chip meta'>stage: {opp_full.stage}</span>"
+          f"<span class='dbe-chip meta'>strategic: {'yes' if _b(opp_full.strategic_account) else 'no'}</span>"
+          f"<span class='dbe-chip meta'>{opp_full.days_since_activity} days since activity</span>")
+st.markdown(f"<div>{chips}</div>", unsafe_allow_html=True)
+st.caption(COMPLEXITY_DEF)
+
 colc, colp = st.columns(2)
 REASONING_CAP = 280  # ~4 lines at body size; overflow collapses, font never shrinks
 for col, tier_key, title in ((colc, "cheap", "cheap · llama3.1-8b"),
@@ -219,6 +263,8 @@ st.success(
     f"**Routing decision:** tier **{h.routed_tier}** — {h.routed_reason}.  \n"
     f"Evidence: {', '.join(f'{k}={v}' for k, v in evidence.items())}"
 )
+if "complexity_score" in evidence:
+    st.caption(COMPLEXITY_DEF + " The lit chips above are the signals being counted.")
 
 # ---- Q&A armor (not part of the demo flow) ---------------------------------
 with st.expander("All 30 records"):
@@ -238,6 +284,14 @@ with st.expander("All 30 records"):
              .rename(columns={"changed_vs_reference": "changed"})
              .sort_values(["changed", "opp_id"], ascending=[False, True]))
 
+    # Compact signals column instead of 7 boolean columns (table width):
+    # abbreviations of the ACTIVE risk signals, so complexity_score is
+    # traceable without leaving the table.
+    flags_by_id = opps.set_index("opp_id")
+    table.insert(4, "signals", table.opp_id.map(
+        lambda oid: ", ".join(abbr for col, _, abbr in RISK_SIGNALS
+                              if _b(flags_by_id.loc[oid][col])) or "—"))
+
     # Highlight the specific cells that differ — one neutral tint (the accent
     # blue, deliberately not red: no editorializing about which arm is wrong).
     TINT = "background-color: rgba(59, 130, 246, 0.22)"
@@ -250,7 +304,25 @@ with st.expander("All 30 records"):
             styles[["ref_blocker", "adaptive_blocker"]] = TINT
         return styles
 
-    st.dataframe(table.style.apply(_diff_tint, axis=1), hide_index=True, width='stretch')
+    st.dataframe(
+        table.style.apply(_diff_tint, axis=1), hide_index=True, width='stretch',
+        column_config={
+            "opp_id": st.column_config.Column(help="Record identifier — one sales opportunity."),
+            "amount": st.column_config.Column(help="Deal size, USD. Never a policy input — shown for context only."),
+            "probability": st.column_config.Column(help="CRM close probability — policy input (certainty veto)."),
+            "complexity_score": st.column_config.Column(help=COMPLEXITY_DEF),
+            "signals": st.column_config.Column(help="The active risk signals behind complexity_score: "
+                                               "buyer=no economic buyer, comp=competitor, sec=security/legal, "
+                                               "proc=procurement not started, champ=champion risk, "
+                                               "inact=inactive >21d, confl=conflicting signals."),
+            "tier": st.column_config.Column(help="Which tier (model) produced the adaptive arm's answer for this record."),
+            "changed": st.column_config.Column(help="Verdict or blocker differs between the two arms — exact match on enums, no judge model."),
+            "consequential": st.column_config.Column(help="Changed AND outside the settled/lost veto bands — a disagreement with room to alter what anyone does."),
+            "ref_verdict": st.column_config.Column(help="Conclusion from the reference arm (all-premium)."),
+            "ref_blocker": st.column_config.Column(help="Conclusion from the reference arm (all-premium)."),
+            "adaptive_verdict": st.column_config.Column(help="Conclusion from the adaptive arm at the selected threshold."),
+            "adaptive_blocker": st.column_config.Column(help="Conclusion from the adaptive arm at the selected threshold."),
+        })
     st.caption("Tinted cells are the fields where the two arms' conclusions differ — "
                "tier plus highlight answers which model disagreed, and on which field.")
 
@@ -267,7 +339,16 @@ with st.expander("Usage detail"):
                   output_tokens=("output_tokens", "sum"), credits=("credits", "sum")))
     usage["cost ($)"] = (usage.credits * 3.00).map(lambda v: f"{v:.4f}")
     usage["credits"] = usage.credits.map(lambda v: f"{v:.6f}")
-    st.dataframe(usage, hide_index=True, width='stretch')
+    st.dataframe(usage, hide_index=True, width='stretch', column_config={
+        "model": st.column_config.Column(help="The Cortex model behind a tier — cheap=llama3.1-8b, "
+                                         "balanced=mistral-large2, premium=claude-sonnet-4-5."),
+        "calls": st.column_config.Column(help="Unique (record, tier) calls — shared calls counted once."),
+        "input_tokens": st.column_config.Column(help="Measured from AI_COMPLETE show_details usage, summed over unique calls."),
+        "output_tokens": st.column_config.Column(help="Measured from AI_COMPLETE show_details usage, summed over unique calls."),
+        "credits": st.column_config.Column(help="Measured from show_details token counts × published consumption-table rates."),
+        "cost ($)": st.column_config.Column(help="Measured from show_details token counts × published rates, "
+                                            "at \\$3.00/credit (Enterprise on-demand, AWS us-west-2 — stated assumption)."),
+    })
     st.caption("Unique model calls behind the reference arm and the adaptive arm at the "
                "selected threshold — a record premium in both arms is one call, counted once. "
                "Raw measured values from MODEL_RUNS; reconcilable against Snowflake's "
