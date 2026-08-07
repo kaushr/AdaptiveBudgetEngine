@@ -12,7 +12,7 @@ Words in one group are NOT interchangeable with words in another group, even whe
 |---|---|---|
 | **Workload** | The whole task: "analyze 30 opportunities." One workload, many records. | Not a single record. Snowflake's tooling optimizes at this level; we go one level deeper. |
 | **Record / Opportunity** | One row — one deal. The unit our policy routes. | "Opportunity" (sales word) and "record" (data word) are the same thing here. Use "record" when speaking generally, "opportunity" when speaking about sales. |
-| **Hero (record)** | One of the 3 hand-authored records built to demonstrate a specific behavior: the settled one ($5M renewal), the contestable one ($400K expansion), the complex one. | Not "the best" records — the *demonstration* records. |
+| **Hero (record)** | One of the 3 hand-authored records built to demonstrate a specific behavior: the settled one ($5.2M renewal, OPP-001), the complex one ($400K expansion, OPP-002), the contestable one ($750K claims pilot, OPP-003). | Not "the best" records — the *demonstration* records. |
 
 ---
 
