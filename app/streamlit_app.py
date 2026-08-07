@@ -239,7 +239,7 @@ st.markdown(f"<div>{chips}</div>", unsafe_allow_html=True)
 st.caption(COMPLEXITY_DEF)
 
 colc, colp = st.columns(2)
-REASONING_CAP = 280  # ~4 lines at body size; overflow collapses, font never shrinks
+REASONING_CAP = 400  # ~4 lines at body size; overflow collapses, font never shrinks
 for col, tier_key, title in ((colc, "cheap", "cheap · llama3.1-8b"),
                              (colp, "premium", "premium · claude-sonnet-4-5")):
     with col:
@@ -254,7 +254,8 @@ for col, tier_key, title in ((colc, "cheap", "cheap · llama3.1-8b"),
             cut = reasoning[:REASONING_CAP].rsplit(" ", 1)[0]
             st.caption(cut + " …")
             with st.expander("more"):
-                st.caption(reasoning)
+                # remainder only — never a second copy of the preview text
+                st.caption("… " + reasoning[len(cut):].strip())
         else:
             st.caption(reasoning)
 
@@ -308,20 +309,20 @@ with st.expander("All 30 records"):
         table.style.apply(_diff_tint, axis=1), hide_index=True, width='stretch',
         column_config={
             "opp_id": st.column_config.Column(help="Record identifier — one sales opportunity."),
-            "amount": st.column_config.Column(help="Deal size, USD. Never a policy input — shown for context only."),
-            "probability": st.column_config.Column(help="CRM close probability — policy input (certainty veto)."),
+            "amount": st.column_config.Column(help="Deal size, USD. The routing rule never looks at it — shown for context only."),
+            "probability": st.column_config.Column(help="The CRM's close probability for this deal (0–1). The routing rule's first check: very high or very low means the outcome is effectively decided, so the record is routed cheap."),
             "complexity_score": st.column_config.Column(help=COMPLEXITY_DEF),
             "signals": st.column_config.Column(help="The active risk signals behind complexity_score: "
                                                "buyer=no economic buyer, comp=competitor, sec=security/legal, "
                                                "proc=procurement not started, champ=champion risk, "
                                                "inact=inactive >21d, confl=conflicting signals."),
-            "tier": st.column_config.Column(help="Which tier (model) produced the adaptive arm's answer for this record."),
-            "changed": st.column_config.Column(help="Verdict or blocker differs between the two arms — exact match on enums, no judge model."),
-            "consequential": st.column_config.Column(help="Changed AND outside the settled/lost veto bands — a disagreement with room to alter what anyone does."),
-            "ref_verdict": st.column_config.Column(help="Conclusion from the reference arm (all-premium)."),
-            "ref_blocker": st.column_config.Column(help="Conclusion from the reference arm (all-premium)."),
-            "adaptive_verdict": st.column_config.Column(help="Conclusion from the adaptive arm at the selected threshold."),
-            "adaptive_blocker": st.column_config.Column(help="Conclusion from the adaptive arm at the selected threshold."),
+            "tier": st.column_config.Column(help="Which tier (and model) produced the adaptive policy's answer for this record — cheap=llama3.1-8b, balanced=mistral-large2, premium=claude-sonnet-4-5."),
+            "changed": st.column_config.Column(help="The two policies reached different conclusions for this record — the verdict or the primary blocker differs, by exact string match. No AI grades these answers."),
+            "consequential": st.column_config.Column(help="The two policies disagree on a live deal — where a different answer could change what the rep does next. Unchecked changed rows are disagreements on already-settled or already-lost deals, where the action stays the same either way."),
+            "ref_verdict": st.column_config.Column(help="Conclusion from the reference policy — every record sent to the premium model."),
+            "ref_blocker": st.column_config.Column(help="Conclusion from the reference policy — every record sent to the premium model."),
+            "adaptive_verdict": st.column_config.Column(help="Conclusion from the adaptive policy at the threshold currently selected on the slider."),
+            "adaptive_blocker": st.column_config.Column(help="Conclusion from the adaptive policy at the threshold currently selected on the slider."),
         })
     st.caption("Tinted cells are the fields where the two arms' conclusions differ — "
                "tier plus highlight answers which model disagreed, and on which field.")
@@ -342,12 +343,14 @@ with st.expander("Usage detail"):
     st.dataframe(usage, hide_index=True, width='stretch', column_config={
         "model": st.column_config.Column(help="The Cortex model behind a tier — cheap=llama3.1-8b, "
                                          "balanced=mistral-large2, premium=claude-sonnet-4-5."),
-        "calls": st.column_config.Column(help="Unique (record, tier) calls — shared calls counted once."),
-        "input_tokens": st.column_config.Column(help="Measured from AI_COMPLETE show_details usage, summed over unique calls."),
-        "output_tokens": st.column_config.Column(help="Measured from AI_COMPLETE show_details usage, summed over unique calls."),
-        "credits": st.column_config.Column(help="Measured from show_details token counts × published consumption-table rates."),
-        "cost ($)": st.column_config.Column(help="Measured from show_details token counts × published rates, "
-                                            "at \\$3.00/credit (Enterprise on-demand, AWS us-west-2 — stated assumption)."),
+        "calls": st.column_config.Column(help="Unique model calls: one per (record, tier) pair. A call used by "
+                                         "both policies is counted once, so these are physical calls, not billing rows."),
+        "input_tokens": st.column_config.Column(help="Token counts as returned by each model call, summed over the unique calls."),
+        "output_tokens": st.column_config.Column(help="Token counts as returned by each model call, summed over the unique calls."),
+        "credits": st.column_config.Column(help="Each call's returned token counts priced at Snowflake's published "
+                                           "per-token rates — measured, not estimated."),
+        "cost ($)": st.column_config.Column(help="Credits converted at \\$3.00 per credit (Enterprise on-demand, "
+                                            "AWS us-west-2 — a stated assumption; the credits column is the measured value)."),
     })
     st.caption("Unique model calls behind the reference arm and the adaptive arm at the "
                "selected threshold — a record premium in both arms is one call, counted once. "
