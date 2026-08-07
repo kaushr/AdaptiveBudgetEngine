@@ -10,6 +10,7 @@ Every number displayed comes from RUN_SUMMARY / MODEL_RUNS / POLICY_DECISIONS /
 HEROES. Nothing is computed from model output here, nothing is invented.
 """
 
+import html
 import json
 import os
 
@@ -17,6 +18,23 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(page_title="Decision Budget Engine", layout="wide")
+
+# One style scale for the whole page (readability pass):
+#   title (st.title) > metric values (2.4rem, the most prominent) >
+#   next-best-action (1.35rem, second) > section headers (st.subheader) >
+#   body (base 18px via .streamlit/config.toml) > labels/small print (.85rem).
+# One muted color for ALL secondary text; card text is white on tinted cards.
+MUTED = "#9aa4b2"
+st.markdown(f"""<style>
+[data-testid="stMetricValue"] {{ font-size: 2.4rem; font-weight: 700; }}
+[data-testid="stMetricLabel"] {{ font-size: .85rem; color: {MUTED}; }}
+[data-testid="stCaptionContainer"] {{ color: {MUTED}; font-size: .95rem; }}
+.dbe-card {{ border-radius: 8px; padding: 12px 14px; }}
+.dbe-card-label {{ font-size: .85rem; color: rgba(255,255,255,.78); }}
+.dbe-card-value {{ font-size: 2.4rem; font-weight: 700; color: #fff; line-height: 1.15; }}
+.dbe-card-sub {{ font-size: .85rem; color: rgba(255,255,255,.78); }}
+.dbe-action {{ font-size: 1.35rem; font-weight: 650; line-height: 1.35; min-height: 4.6em; }}
+</style>""", unsafe_allow_html=True)
 
 RESULTS_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "results"))
 TABLES = ("run_summary", "model_runs", "policy_decisions", "heroes", "opportunities")
@@ -50,7 +68,19 @@ heroes = data["heroes"]
 ref = summary[summary.policy == "reference"].iloc[0]
 
 def fmt_amount(v):
+    """Plain currency for dataframe cells (no markdown processing there)."""
     return f"${v / 1e6:.1f}M" if v >= 1_000_000 else f"${v / 1e3:.0f}K"
+
+
+def md_usd(v, dec=4):
+    """Currency for st.markdown/st.caption/st.info strings. The backslash
+    escape stops Streamlit's markdown from treating paired $...$ as LaTeX
+    math delimiters (the root cause of the mangled decomposition line)."""
+    return f"\\${v:,.{dec}f}"
+
+
+def md_amount(v):
+    return fmt_amount(v).replace("$", "\\$")
 
 
 st.title("Decision Budget Engine")
@@ -82,9 +112,9 @@ c1, c2, c3, c4 = st.columns(4)
 c1.metric("Cost vs reference", f"{row.cost_vs_reference_pct:.0f}%")
 with c2:
     st.markdown(
-        f"<div style='background:#1a3d5c;border-radius:8px;padding:10px 14px;text-align:center'>"
-        f"<div style='font-size:0.8rem;color:#cfe3f5'>Decisions changed</div>"
-        f"<div style='font-size:2.4rem;font-weight:700;color:#fff'>{int(row.decisions_changed)} of 30</div>"
+        f"<div class='dbe-card' style='background:#1a3d5c;text-align:center'>"
+        f"<div class='dbe-card-label'>Decisions changed</div>"
+        f"<div class='dbe-card-value'>{int(row.decisions_changed)} of 30</div>"
         f"</div>", unsafe_allow_html=True)
 c3.metric("Verdict agreement", f"{row.verdict_agreement_pct:.0f}%")
 c4.metric("Routed cheap", f"{row.pct_cheap:.0f}%")
@@ -110,7 +140,7 @@ pin_tiers = " → ".join(pin.tier.tolist())
 pin_now = pin[pin.threshold.astype(float) == threshold].iloc[0]
 opp8 = data["opportunities"].set_index("opp_id").loc["OPP-008"]
 st.info(
-    f"**OPP-008 — {opp8['name']}** · {fmt_amount(opp8.amount)} · p=0.93 · complexity 4  \n"
+    f"**OPP-008 — {opp8['name']}** · {md_amount(opp8.amount)} · p=0.93 · complexity 4  \n"
     f"Across the three thresholds its tier goes **{pin_tiers}** — at {threshold:.2f} it gets "
     f"**{pin_now.tier}**. Probable and messy at the same time: certainty vetoes spend once "
     f"the bar loosens, no matter how complex the record looks. Deal size never enters the rule."
@@ -124,18 +154,18 @@ with beat1:
                   f"${ref.total_dollars:.4f}",
                   help=f"{ref.total_credits:.6f} credits · 30 premium calls")
         st.caption(f"Adaptive at {threshold:.2f} decomposes: "
-                   f"cheap ${row.cheap_credits * 3:.4f} · balanced ${row.balanced_credits * 3:.4f} · "
-                   f"premium ${row.premium_credits * 3:.4f}")
-        st.caption(f"At 10,000 records/week: **${ref.projected_10k_weekly_dollars:.2f} → "
-                   f"${row.projected_10k_weekly_dollars:.2f}** "
+                   f"cheap {md_usd(row.cheap_credits * 3)} · balanced {md_usd(row.balanced_credits * 3)} · "
+                   f"premium {md_usd(row.premium_credits * 3)}")
+        st.caption(f"At 10,000 records/week: **{md_usd(ref.projected_10k_weekly_dollars, 2)} → "
+                   f"{md_usd(row.projected_10k_weekly_dollars, 2)}** "
                    f"(projected from measured per-record cost)")
     with b2:
         st.markdown(
-            f"<div style='background:#7a5200;border-radius:8px;padding:14px'>"
-            f"<div style='font-size:0.85rem;color:#ffe9b8'>Spent on decisions that were already made</div>"
-            f"<div style='font-size:1.8rem;font-weight:700;color:#fff'>${row.waste_dollars:.4f} "
+            f"<div class='dbe-card' style='background:#7a5200'>"
+            f"<div class='dbe-card-label'>Spent on decisions that were already made</div>"
+            f"<div class='dbe-card-value'>&#36;{row.waste_dollars:.4f} "
             f"on {int(row.waste_count)} records</div>"
-            f"<div style='font-size:0.8rem;color:#ffe9b8'>Records the policy routed cheap where the "
+            f"<div class='dbe-card-sub'>Records the policy routed cheap where the "
             f"cheap tier reached identical conclusions to premium ({row.waste_records.replace(';', ', ')})</div>"
             f"</div>", unsafe_allow_html=True)
 
@@ -147,16 +177,27 @@ kind = st.radio("Hero record", ["settled", "contestable", "complex"],
                 horizontal=True, label_visibility="collapsed")
 h = heroes[heroes.kind == kind].iloc[0]
 
-st.markdown(f"**{h['opp_id']} — {h['name']}** · {fmt_amount(h.amount)} · "
+st.markdown(f"**{h['opp_id']} — {h['name']}** · {md_amount(h.amount)} · "
             f"p={h.probability} · complexity {h.complexity_score}")
 colc, colp = st.columns(2)
+REASONING_CAP = 280  # ~4 lines at body size; overflow collapses, font never shrinks
 for col, tier_key, title in ((colc, "cheap", "cheap · llama3.1-8b"),
                              (colp, "premium", "premium · claude-sonnet-4-5")):
     with col:
         st.markdown(f"##### {title}")
         st.markdown(f"`{h[f'{tier_key}_verdict']}` · `{h[f'{tier_key}_primary_blocker']}`")
-        st.markdown(f"### {h[f'{tier_key}_next_best_action']}")
-        st.caption(h[f"{tier_key}_reasoning"])
+        # fixed-size action block keeps the two arms' cards aligned regardless
+        # of action length; same size both arms, always the second-largest text
+        st.markdown(f"<div class='dbe-action'>{html.escape(h[f'{tier_key}_next_best_action'])}</div>",
+                    unsafe_allow_html=True)
+        reasoning = h[f"{tier_key}_reasoning"]
+        if len(reasoning) > REASONING_CAP:
+            cut = reasoning[:REASONING_CAP].rsplit(" ", 1)[0]
+            st.caption(cut + " …")
+            with st.expander("more"):
+                st.caption(reasoning)
+        else:
+            st.caption(reasoning)
 
 evidence = json.loads(h.routed_evidence)
 st.success(

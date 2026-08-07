@@ -2,3 +2,5 @@
 # slider as danger, which contradicts the frontier-is-tunable framing.
 [theme]
 primaryColor = "#3B82F6"
+# Projector-distance readability: raise the base size everything scales from.
+baseFontSize = 18
