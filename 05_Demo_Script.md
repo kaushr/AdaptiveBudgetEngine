@@ -48,8 +48,23 @@ Screen state at start: slider at **0.98 · Conservative**, hero selector on
 
 Everything else: `03_Judge_Questions.md`. Re-read it the morning of.
 
-## Timing notes
+## Timing notes — calibrated to 135 wpm (presentation pace under pressure)
 
-- Spoken text is 367 words ≈ 2:27 at a calm 150 wpm — leaves ~15s for slider moves and the pause before the close. Tight but inside 2:45; use the compression below if a rehearsal runs over.
-- If running long, Beat 1's second paragraph compresses to one sentence ("The amber card: premium spend on decisions that were already made"). Never cut the calibration sentence, the methodology statement, or the closing line.
-- Three clean rehearsal runs under 2:45 before submitting (workbook T15).
+Full script is 367 words ≈ **2:43 at 135 wpm — zero slack.** Rehearse the full
+version once to hear it, then decide per beat. Three compression points, in the
+order to take them; **rehearse the compressed version at least once** so it's
+in your mouth if the timer's running hot:
+
+| # | Where | Replace | With | Saves |
+|---|---|---|---|---|
+| C1 | Beat 1, ¶2 | the whole amber-card paragraph | "The amber card: premium spend on decisions that were already made." | ~20 words / 9s |
+| C2 | Beat 2, pin | the whole pinned-record passage | "This $2.4M record — 93 percent probability, complexity four — goes premium, premium, cheap as the threshold loosens. Deal size never enters the rule." | ~18 words / 8s |
+| C3 | Beat 3 | "Different conclusions, different Monday for that rep." | *(cut)* | ~8 words / 4s |
+
+All three taken: **321 words ≈ 2:23 at 135 wpm** — comfortable slack for slider
+moves and the pause.
+
+**Never cut:** the calibration sentence, the methodology statement, the closing
+line, or the plainly-spoken 90 percent.
+
+Three clean rehearsal runs under 2:45 before submitting (workbook T15).

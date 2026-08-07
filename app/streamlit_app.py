@@ -178,6 +178,25 @@ with st.expander("All 30 records"):
              .sort_values(["changed", "opp_id"], ascending=[False, True]))
     st.dataframe(table, hide_index=True, width='stretch')
 
+with st.expander("Usage detail"):
+    # Token-economy accounting per model. MODEL_RUNS repeats shared calls
+    # across arms (a record premium in both arms was one physical call) —
+    # dedupe on (opp_id, tier) so tokens bought once are counted once.
+    arms = pd.concat([
+        runs[runs.policy == "reference"],
+        runs[(runs.policy == "adaptive") & (runs.threshold.astype(float) == threshold)],
+    ]).drop_duplicates(subset=["opp_id", "tier"])
+    usage = (arms.groupby("model", as_index=False)
+             .agg(calls=("opp_id", "count"), input_tokens=("input_tokens", "sum"),
+                  output_tokens=("output_tokens", "sum"), credits=("credits", "sum")))
+    usage["cost ($)"] = (usage.credits * 3.00).map(lambda v: f"{v:.4f}")
+    usage["credits"] = usage.credits.map(lambda v: f"{v:.6f}")
+    st.dataframe(usage, hide_index=True, width='stretch')
+    st.caption("Unique model calls behind the reference arm and the adaptive arm at the "
+               "selected threshold — a record premium in both arms is one call, counted once. "
+               "Raw measured values from MODEL_RUNS; reconcilable against Snowflake's "
+               "CORTEX_FUNCTIONS_USAGE_HISTORY (same ledger).")
+
 with st.expander("The policy"):
     st.code(
         f"if probability >= {threshold:.2f}:   # settled — certainty vetoes spend\n"
