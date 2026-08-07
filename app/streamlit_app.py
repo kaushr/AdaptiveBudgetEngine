@@ -178,15 +178,32 @@ row = summary[(summary.policy == "adaptive")
               & (summary.threshold.astype(float) == threshold)].iloc[0]
 
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("Cost vs reference", f"{row.cost_vs_reference_pct:.0f}%")
+c1.metric("Cost vs reference", f"{row.cost_vs_reference_pct:.0f}%",
+          help="What the adaptive policy costs as a share of premium-everything. "
+               f"Math: adaptive cost ÷ reference cost = \\${row.total_dollars:.4f} ÷ "
+               f"\\${ref.total_dollars:.4f} = {row.cost_vs_reference_pct:.0f}%. "
+               "Lower is cheaper — the paired question is whether conclusions changed.")
 with c2:
+    _changed_tip = html.escape(
+        "How many records the two policies answered differently. Math: count of "
+        "records where the verdict OR the primary blocker differs — exact string "
+        f"match on fixed enums, no model judging. Here: {int(row.decisions_changed)} of 30.")
     st.markdown(
-        f"<div class='dbe-card' style='background:#1a3d5c;text-align:center'>"
-        f"<div class='dbe-card-label'>Decisions changed</div>"
+        f"<div class='dbe-card' style='background:#1a3d5c;text-align:center' "
+        f"title='{_changed_tip}'>"
+        f"<div class='dbe-card-label'>Decisions changed ⓘ</div>"
         f"<div class='dbe-card-value'>{int(row.decisions_changed)} of 30</div>"
         f"</div>", unsafe_allow_html=True)
-c3.metric("Verdict agreement", f"{row.verdict_agreement_pct:.0f}%")
-c4.metric("Routed cheap", f"{row.pct_cheap:.0f}%")
+_v_match = round(row.verdict_agreement_pct * 30 / 100)
+c3.metric("Verdict agreement", f"{row.verdict_agreement_pct:.0f}%",
+          help="How often both policies reached the same verdict. "
+               f"Math: {_v_match} of 30 matching ÷ 30 = {row.verdict_agreement_pct:.0f}%. "
+               "Blocker agreement is scored the same way separately "
+               f"({row.blocker_agreement_pct:.0f}%).")
+c4.metric("Routed cheap", f"{row.pct_cheap:.0f}%",
+          help="Share of records the policy sent to the cheap model at this threshold. "
+               f"Math: {int(row.cheap_n)} of 30 = {row.pct_cheap:.1f}%. Rises as the "
+               "threshold loosens — it's the mechanism behind falling cost.")
 st.caption(f"Blocker agreement: {row.blocker_agreement_pct:.0f}%. "
            "A decision changed when the two arms reach different conclusions "
            "(verdict or primary blocker) — scored by exact match, no judge model.")
@@ -213,7 +230,22 @@ frontier_view = frontier[["operating point", "pct_cheap", "total_dollars",
     "pct_cheap": "% routed cheap", "total_dollars": "total cost ($)",
     "decisions_changed": "decisions changed", "verdict_agreement_pct": "verdict agreement (%)"})
 frontier_view["total cost ($)"] = frontier_view["total cost ($)"].map(lambda v: f"{v:.4f}")
-st.dataframe(frontier_view, hide_index=True, width='stretch')
+st.dataframe(frontier_view, hide_index=True, width='stretch', column_config={
+    "operating point": st.column_config.Column(
+        help="The settledness bar: deals at or above this close probability are "
+             "routed cheap. Reference (1.00) means nothing is ever settled enough "
+             "to spend less on — every record gets the premium model."),
+    "% routed cheap": st.column_config.Column(
+        help="Share of the 30 records sent to the cheap model at that setting."),
+    "total cost ($)": st.column_config.Column(
+        help="Measured cost of running that policy across all 30 records — summed "
+             "from each call's returned token counts × published Cortex rates."),
+    "decisions changed": st.column_config.Column(
+        help="Records answered differently vs premium-everything: the verdict or "
+             "the primary blocker differs, by exact string match."),
+    "verdict agreement (%)": st.column_config.Column(
+        help="Share of the 30 records where both policies reached the same verdict."),
+})
 
 # Pinned record: the certainty veto overriding high complexity
 pin = decisions[decisions.opp_id == "OPP-008"].sort_values("threshold", ascending=False)
@@ -226,7 +258,6 @@ st.info(
     f"**{pin_now.tier}**. Probable and messy at the same time: certainty vetoes spend once "
     f"the bar loosens, no matter how complex the record looks. Deal size never enters the rule."
 )
-st.caption(COMPLEXITY_DEF)
 
 # ---- Beat 1 content (needs the slider's operating point) -------------------
 with beat1:
@@ -234,17 +265,30 @@ with beat1:
     with b1:
         st.metric("Reference policy — every record to the premium model",
                   f"${ref.total_dollars:.4f}",
-                  help=f"{ref.total_credits:.6f} credits · 30 premium calls")
+                  help="What it cost to send all 30 opportunities to the premium "
+                       "model — the status quo this comparison is against. Math: sum "
+                       "of the 30 premium calls' measured token costs (input + output "
+                       "tokens × published Cortex rates) = "
+                       f"\\${ref.total_dollars:.4f} ({ref.total_credits:.6f} credits).")
         st.caption(f"Adaptive at {threshold:.2f} decomposes: "
                    f"cheap {md_usd(row.cheap_credits * 3)} · balanced {md_usd(row.balanced_credits * 3)} · "
                    f"premium {md_usd(row.premium_credits * 3)}")
         st.caption(f"At 10,000 records/week: **{md_usd(ref.projected_10k_weekly_dollars, 2)} → "
-                   f"{md_usd(row.projected_10k_weekly_dollars, 2)}** "
-                   f"(projected from measured per-record cost)")
+                   f"{md_usd(row.projected_10k_weekly_dollars, 2)}** — linear projection: "
+                   f"measured per-record cost × 10,000 (projected, not measured)")
     with b2:
+        _waste_names = row.waste_records.replace(";", " + ")
+        _all_waste = summary[summary.policy == "adaptive"].waste_count.astype(int).unique()
+        _robust = (f" It stays {int(_all_waste[0])} at every threshold — the most "
+                   f"robust overspend in the set.") if len(_all_waste) == 1 else ""
+        _waste_tip = html.escape(
+            "Premium money that bought nothing: records the policy routed cheap where "
+            "the cheap model reached the identical verdict and blocker, so paying "
+            "premium changed no answer. Math: the premium policy's cost on just those "
+            f"records ({_waste_names}) = ${row.waste_dollars:.4f}.{_robust}")
         st.markdown(
-            f"<div class='dbe-card' style='background:#7a5200'>"
-            f"<div class='dbe-card-label'>Spent on decisions that were already made</div>"
+            f"<div class='dbe-card' style='background:#7a5200' title='{_waste_tip}'>"
+            f"<div class='dbe-card-label'>Spent on decisions that were already made ⓘ</div>"
             f"<div class='dbe-card-value'>&#36;{row.waste_dollars:.4f} "
             f"on {int(row.waste_count)} records</div>"
             f"<div class='dbe-card-sub'>Records the policy routed cheap where the "
@@ -263,7 +307,7 @@ kind = st.radio("Hero record", ["settled", "contestable", "complex"],
 h = heroes[heroes.kind == kind].iloc[0]
 
 st.markdown(f"**{h['opp_id']} — {h['name']}** · {md_amount(h.amount)} · "
-            f"p={h.probability} · complexity {h.complexity_score}")
+            f"p={float(h.probability):.2f} · complexity {h.complexity_score}")
 
 # Full attribute set: the seven risk signals as chips (lit = active, so the
 # complexity score is visibly the count of lit chips) plus stage/strategic.
@@ -315,8 +359,9 @@ with st.expander("All 30 records"):
     reference = runs[runs.policy == "reference"]
     dec = decisions[decisions.threshold.astype(float) == threshold]
     opps = data["opportunities"]
-    table = (opps[["opp_id", "amount", "probability"]]
-             .assign(amount=lambda d: d.amount.map(fmt_amount))
+    # amount deliberately omitted: it is never a policy input, the hero cards
+    # carry it, and the width buys the conclusion columns room to render
+    table = (opps[["opp_id", "probability"]]
              .merge(dec[["opp_id", "complexity_score", "tier", "changed_vs_reference",
                          "consequential"]], on="opp_id")
              .merge(reference[["opp_id", "verdict", "primary_blocker"]]
@@ -333,6 +378,7 @@ with st.expander("All 30 records"):
     table.insert(4, "signals", table.opp_id.map(
         lambda oid: ", ".join(abbr for col, _, abbr in RISK_SIGNALS
                               if _b(flags_by_id.loc[oid][col])) or "—"))
+    table["probability"] = table.probability.map(lambda v: f"{float(v):.2f}")
 
     # Highlight the specific cells that differ — one neutral tint (the accent
     # blue, deliberately not red: no editorializing about which arm is wrong).
@@ -349,17 +395,16 @@ with st.expander("All 30 records"):
     st.dataframe(
         table.style.apply(_diff_tint, axis=1), hide_index=True, width='stretch',
         column_config={
-            "opp_id": st.column_config.Column(help="Record identifier — one sales opportunity."),
-            "amount": st.column_config.Column(help="Deal size, USD. The routing rule never looks at it — shown for context only."),
-            "probability": st.column_config.Column(help="The CRM's close probability for this deal (0–1). The routing rule's first check: very high or very low means the outcome is effectively decided, so the record is routed cheap."),
-            "complexity_score": st.column_config.Column(help=COMPLEXITY_DEF),
+            "opp_id": st.column_config.Column(width="small", help="Record identifier — one sales opportunity."),
+            "probability": st.column_config.Column(width="small", help="The CRM's close probability for this deal (0–1). The routing rule's first check: very high or very low means the outcome is effectively decided, so the record is routed cheap."),
+            "complexity_score": st.column_config.Column(width="small", help=COMPLEXITY_DEF),
             "signals": st.column_config.Column(help="The active risk signals behind complexity_score: "
                                                "buyer=no economic buyer, comp=competitor, sec=security/legal, "
                                                "proc=procurement not started, champ=champion risk, "
                                                "inact=inactive >21d, confl=conflicting signals."),
-            "tier": st.column_config.Column(help="Which tier (and model) produced the adaptive policy's answer for this record — cheap=llama3.1-8b, balanced=mistral-large2, premium=claude-sonnet-4-5."),
-            "changed": st.column_config.Column(help="The two policies reached different conclusions for this record — the verdict or the primary blocker differs, by exact string match. No AI grades these answers."),
-            "consequential": st.column_config.Column(help="The two policies disagree on a live deal — where a different answer could change what the rep does next. Unchecked changed rows are disagreements on already-settled or already-lost deals, where the action stays the same either way."),
+            "tier": st.column_config.Column(width="small", help="Which tier (and model) produced the adaptive policy's answer for this record — cheap=llama3.1-8b, balanced=mistral-large2, premium=claude-sonnet-4-5."),
+            "changed": st.column_config.Column(width="small", help="The two policies reached different conclusions for this record — the verdict or the primary blocker differs, by exact string match. No AI grades these answers."),
+            "consequential": st.column_config.Column(width="small", help="The two policies disagree on a live deal — where a different answer could change what the rep does next. Unchecked changed rows are disagreements on already-settled or already-lost deals, where the action stays the same either way."),
             "ref_verdict": st.column_config.Column(help="Conclusion from the reference policy — every record sent to the premium model."),
             "ref_blocker": st.column_config.Column(help="Conclusion from the reference policy — every record sent to the premium model."),
             "adaptive_verdict": st.column_config.Column(help="Conclusion from the adaptive policy at the threshold currently selected on the slider."),
