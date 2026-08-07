@@ -117,10 +117,12 @@ st.markdown(f"""<style>
 [data-testid="stSliderTickBar"] {{ display: none; }}
 .st-key-dbe_slider {{ padding: 6px 0 0 0; }}
 .st-key-dbe_slider [data-testid="stSliderThumbValue"] {{ font-size: 1.05rem; font-weight: 700; }}
-/* Collapse the default 1rem block gap so the stops row hugs the track */
-.st-key-dbe_slider [data-testid="stVerticalBlock"] {{ gap: .25rem; }}
+/* Collapse the default 1rem block gap, then pull the stops up past the
+   slider's internal bottom padding so they hug the track, with clear
+   separation before the metric tiles below */
+.st-key-dbe_slider [data-testid="stVerticalBlock"] {{ gap: 0; }}
 .dbe-stops {{ display: flex; justify-content: space-between;
-              font-size: .95rem; margin: 0 2px 10px 2px; }}
+              font-size: .95rem; margin: -30px 2px 18px 2px; }}
 </style>""", unsafe_allow_html=True)
 
 RESULTS_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "results"))
