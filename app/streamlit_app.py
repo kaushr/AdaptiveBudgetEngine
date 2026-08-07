@@ -83,7 +83,7 @@ st.markdown(f"""<style>
 .st-key-dbe_changed_card, .st-key-dbe_waste_card {{
     border-radius: 8px; padding: 12px 14px; }}
 .st-key-dbe_changed_card {{ background: #1a3d5c; }}
-.st-key-dbe_waste_card {{ background: #7a5200; }}
+.st-key-dbe_waste_card {{ background: #7a5200; min-height: 268px; }}
 .st-key-dbe_changed_card [data-testid="stMetricLabel"],
 .st-key-dbe_waste_card [data-testid="stMetricLabel"] {{ color: rgba(255,255,255,.85); }}
 .st-key-dbe_changed_card [data-testid="stMetricValue"],
@@ -379,9 +379,9 @@ with beat1:
                            "the selected threshold — the sum of one call per record at "
                            "its assigned tier. Math: cheap + balanced + premium = "
                            f"\\${row.total_dollars:.4f} ({row.total_credits:.6f} credits).")
-            st.caption(f"= cheap {md_usd(row.cheap_credits * 3)} + "
-                       f"balanced {md_usd(row.balanced_credits * 3)} + "
-                       f"premium {md_usd(row.premium_credits * 3)}")
+            st.caption(f"= {int(row.cheap_n)} cheap ({md_usd(row.cheap_credits * 3)}) + "
+                       f"{int(row.balanced_n)} balanced ({md_usd(row.balanced_credits * 3)}) + "
+                       f"{int(row.premium_n)} premium ({md_usd(row.premium_credits * 3)})")
     with b2:
         _waste_names = row.waste_records.replace(";", " + ")
         _all_waste = summary[summary.policy == "adaptive"].waste_count.astype(int).unique()
