@@ -1,5 +1,17 @@
 # Friday — before 11:00
 
+## ⚠ CONTINGENCY — Snowflake account locked (discovered Thu night)
+
+`snow connection test` returns **"Your account has been locked"** (account-level,
+not user-level; not self-service unlockable). First moves at the venue:
+ask the **Snowflake reps / event Discord** to escalate — sponsor-provided trial,
+they can unlock faster than a support ticket. Until unlocked: skip item 0 (the
+rebuild calls AI_COMPLETE) and item 4, present from **offline** (`./demo-offline.sh`
+— the tested default, zero network), skip the live-tab flex. EverOS items are
+unaffected. If asked: "Snowflake locked the trial overnight — automated trial
+heuristics; here's the offline run and last night's query history." If unlocked
+before 2:30, run item 0 then; never after.
+
 ## Submission (deadline 4:00 PM HARD — start at 3:30 regardless of state)
 
 The event page specifies the 4:00 PM deadline and 1–2 builders per team but
