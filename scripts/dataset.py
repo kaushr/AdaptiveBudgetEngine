@@ -64,10 +64,12 @@ OPPORTUNITIES = [
         ["competitor_present", "champion_risk", "conflicting_signals"],
         5, "2026-11-13",
         "Stage says negotiation but no commercial terms have actually been discussed. "
-        "Champion moved into a new role with narrower budget authority mid-cycle. Claims "
-        "VP wants full-department rollout; IT sponsor insists on a 10-seat pilot only -- "
-        "the two have not reconciled scope. Incumbent vendor's renewal is running in "
-        "parallel."),
+        "Champion moved into a new role with narrower budget authority mid-cycle, and "
+        "with that move nobody at Castellan currently owns the budget decision -- the "
+        "Claims VP claims it, but spend of this size routes through an IT steering "
+        "committee the Claims VP does not sit on. Claims VP wants full-department "
+        "rollout; IT sponsor insists on a 10-seat pilot only -- the two have not "
+        "reconciled scope. Incumbent vendor's renewal is running in parallel."),
 
     # --- Below 0.10 -- already lost, certainty veto fires low-side (T3) ------
     rec("OPP-004", "Quarry Steel -- Data Platform", 900_000, 0.05, "DISCOVERY", False,

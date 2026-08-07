@@ -324,10 +324,10 @@ If it routes through the plugin → `cortex` CLI → your connection and returns
 
 ## 11. Still open / to fill in
 
-- [ ] Pricing constants (per-million token rates for llama3.1-8b, mistral-large2, claude-sonnet-4-5) — needed for cost-per-arm measurement
+- [x] ~~Pricing constants~~ — resolved from the official Service Consumption Table (effective July 31, 2026), AI_COMPLETE rows, credits per 1M tokens in/out: llama3.1-8b 0.132/0.132 · mistral-large2 1.20/3.60 · claude-sonnet-4-5 1.80/9.00. Encoded in `scripts/pricing.py` with $3.00/credit (Enterprise on-demand, AWS us-west-2) as the stated $ assumption.
 - [ ] Function Studio availability — ask in event Discord
-- [ ] Repo scaffold + fallback table mechanism
-- [ ] UI framework decision (Streamlit assumed, not yet confirmed)
+- [x] ~~Repo scaffold + fallback table mechanism~~ — done; `data/results/*.csv` is the offline fallback, `DBE_SOURCE` flag switches the UI to Snowflake.
+- [x] ~~UI framework decision~~ — Streamlit confirmed and built (`app/streamlit_app.py`, venv at `.venv/` on Python 3.11 — do NOT use the pyenv 3.8 shim, it's too old for Streamlit).
 - [ ] **EverOS integration depth** — confirm how "deep" the integration needs to be to satisfy the requirement (logging Cases may be enough — or judges may expect visible Skills/learning behavior in the demo). Ask in event Discord, alongside the Function Studio question; EverMind is offering engineering support, so there may be a sanctioned low-lift path.
 - [ ] **Test the EverOS Claude Code plugin** as a fast integration path (see §12).
 
