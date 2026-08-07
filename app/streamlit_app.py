@@ -124,10 +124,15 @@ div.dbe-field {{ margin: 6px 0 1px 0; }}
 .dbe-src-chip {{ float: right; font-size: .8rem; color: {MUTED};
                  background: rgba(154,164,178,.10); border: 1px solid rgba(154,164,178,.22);
                  border-radius: 12px; padding: 3px 12px; margin-top: 4px; }}
-/* Reference-policy tile: navy, mirroring the amber waste tile.
-   Both tiles share a min-height so the pair reads symmetric. */
-.st-key-dbe_ref_card, .st-key-dbe_waste_card {{ min-height: 14.5rem; }}
+/* Bill stack: reference (navy) with the adaptive counterpoint directly
+   beneath — one comparison in a vertical sweep, top-aligned vs the amber. */
 .st-key-dbe_ref_card {{ background: #1a3d5c; border-radius: 8px; padding: 12px 14px; }}
+.st-key-dbe_adaptive_card {{ background: rgba(59,130,246,.10);
+    border: 1px solid rgba(59,130,246,.5); border-radius: 8px; padding: 12px 14px; }}
+.st-key-dbe_adaptive_card [data-testid="stMetricValue"] {{ font-size: 1.9rem; color: #fff; }}
+.st-key-dbe_adaptive_card [data-testid="stMetricLabel"] {{ color: rgba(255,255,255,.85); }}
+.st-key-dbe_adaptive_card [data-testid="stCaptionContainer"] {{ color: rgba(255,255,255,.78); }}
+.st-key-dbe_bill_stack [data-testid="stVerticalBlock"] {{ gap: .45rem; }}
 .st-key-dbe_ref_card [data-testid="stMetricLabel"] {{ color: rgba(255,255,255,.85); }}
 .st-key-dbe_ref_card [data-testid="stMetricValue"] {{ color: #fff; }}
 .st-key-dbe_ref_card [data-testid="stCaptionContainer"] {{ color: rgba(255,255,255,.78); }}
@@ -356,7 +361,7 @@ st.info(
 # ---- Beat 1 content (needs the slider's operating point) -------------------
 with beat1:
     b1, b2 = st.columns(2)
-    with b1:
+    with b1, st.container(key="dbe_bill_stack"):
         with st.container(key="dbe_ref_card"):
             st.metric("Reference policy — every record to the premium model",
                       f"${ref.total_dollars:.4f}",
@@ -364,9 +369,18 @@ with beat1:
                            "model — the status quo this comparison is against. Math: sum "
                            "of the 30 premium calls' measured token costs (input + output "
                            "tokens × published Cortex rates) = "
-                           f"\\${ref.total_dollars:.4f} ({ref.total_credits:.6f} credits).")
-            st.caption(f"Adaptive at {threshold:.2f} decomposes: "
-                       f"cheap {md_usd(row.cheap_credits * 3)} · balanced {md_usd(row.balanced_credits * 3)} · "
+                           f"\\${ref.total_dollars:.4f} ({ref.total_credits:.6f} credits). "
+                           "The card below is what the adaptive policy cost on the same "
+                           "records.")
+        with st.container(key="dbe_adaptive_card"):
+            st.metric(f"Adaptive policy at {threshold:.2f}",
+                      f"${row.total_dollars:.4f}",
+                      help="What the adaptive policy spent across the same 30 records at "
+                           "the selected threshold — the sum of one call per record at "
+                           "its assigned tier. Math: cheap + balanced + premium = "
+                           f"\\${row.total_dollars:.4f} ({row.total_credits:.6f} credits).")
+            st.caption(f"= cheap {md_usd(row.cheap_credits * 3)} + "
+                       f"balanced {md_usd(row.balanced_credits * 3)} + "
                        f"premium {md_usd(row.premium_credits * 3)}")
     with b2:
         _waste_names = row.waste_records.replace(";", " + ")
@@ -393,10 +407,17 @@ with beat1:
         st.markdown(f"<span class='dbe-proj-val'>At 10,000 records/week: "
                     f"{md_usd(ref.projected_10k_weekly_dollars, 2)} → "
                     f"{md_usd(row.projected_10k_weekly_dollars, 2)}.</span> "
-                    f"<span class='dbe-proj-save'>Adaptive policy will save "
-                    f"{md_usd(_saved, 2)} a week.</span>",
+                    f"<span class='dbe-proj-save'>Projected saving: "
+                    f"{md_usd(_saved, 2)}/week.</span>",
                     unsafe_allow_html=True)
-        st.caption("Linear projection: measured per-record cost × 10,000 — projected, not measured.")
+        st.caption(f"Reference: {md_usd(ref.total_dollars)} ÷ 30 = "
+                   f"{md_usd(ref.total_dollars / 30, 5)}/record × 10,000 = "
+                   f"{md_usd(ref.projected_10k_weekly_dollars, 2)}. "
+                   f"Adaptive: {md_usd(row.total_dollars)} ÷ 30 = "
+                   f"{md_usd(row.total_dollars / 30, 5)}/record × 10,000 = "
+                   f"{md_usd(row.projected_10k_weekly_dollars, 2)}. "
+                   f"Difference: {md_usd(_saved, 2)}/week. Linear projection, computed "
+                   "from unrounded credits — projected, not measured.")
 
 st.divider()
 
