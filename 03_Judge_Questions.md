@@ -6,6 +6,14 @@ Read the morning of. Answer in two or three sentences and stop talking. Over-exp
 
 ---
 
+## The elevator framing (for non-technical judges)
+
+A manager with 30 deals hires an expensive consultant to review every one, every week. On most deals the consultant looks for two minutes and says what the junior analyst would have said for free. On a few messy ones, the consultant genuinely earns the fee. The waste isn't hiring the consultant — it's hiring the consultant for deals where a glance was enough. This product is the rule that decides, per deal, who reviews it — using information the manager already has (how settled is it? how many unresolved problems?), never the deal's size.
+
+**The two-line differentiation:** Snowflake's new cost stack (spend aggregation, per-user limits, runaway-query cancellation, workload model selection) governs accounts, users, and queries — it never looks inside a query at row 7 vs row 8. Token/model efficiency makes every call cheaper or picks a better default; both still treat every record identically. We're the layer that varies treatment per record — stacks on top of both, competes with neither.
+
+---
+
 ## Tier 1 — you will get these
 
 ### "Isn't this just an if statement?"
@@ -31,6 +39,10 @@ No — and this is the one place I'd demo rather than answer. Move the probabili
 Then you move along the frontier. Three operating points, one threshold, same logic. The product isn't one correct policy — it's a tunable one.
 
 *If your measured number is unflattering, lead with this framing rather than waiting to be asked.*
+
+### "Doesn't running two models on everything double the cost?"
+
+Only during calibration, which is occasional and sample-sized. Daily runtime is single-arm — each record gets exactly one call at its assigned tier — strictly cheaper than the premium-everything status quo. This is standard eval practice: nobody runs an A/B test forever; you run it until you trust the winner, ship the winner, re-test on a cadence.
 
 ---
 
@@ -64,9 +76,27 @@ Right, but the customer should still see one control. They can't reason about tw
 
 Three stages. Sweep the parameter grid offline against a labeled sample and let the customer pick a point. Recalibrate periodically, because the frontier moves as data drifts. Then learn online from outcomes. Most of the value is in stage one — plenty of systems never need stage three.
 
+### "Why only two enum fields? Real decisions are richer."
+
+Two enums are the deliberately minimal contract that makes agreement a `!=`. Production returns a richer per-record mix, each scored by type: more enums (action category, escalation level) by exact match; numerics (days-to-close, discount ceiling) by tolerance bands; extracted facts (named economic buyer) by lookup against the CRM; free text shown to humans, not auto-scored. The generalizing principle: structure the output so agreement is computable — the frontier machinery follows from that, regardless of field count.
+
+**If asked why not LLM-as-judge:** deliberately absent from scoring. A judge model would make the headline number carry a second model's biases, and hands judges the "AI grading AI" attack. Exact match on contractually-forced enums is reproducible by anyone with the two output tables.
+
 ---
 
 ## Tier 3 — the hard ones
+
+### "Agreement means nothing if all 30 conclusions are wrong."
+
+Correct — concede immediately. Agreement measures consistency between arms, not correctness; if the premium arm is wrong, high agreement means faithfully reproducing wrongness at lower cost. Then the three-layer path:
+
+- **Layer 1 (this demo): consistency.** Exact-match on enums. All we claim. The premium arm is a reference implementation, not truth.
+- **Layer 2 (expert labels): accuracy.** Managers review outputs blind to which arm produced them, marked right/wrong. Measures accuracy per arm, not just agreement. Available immediately, expensive per label. This is how you validate the premium arm deserves to be the reference at all.
+- **Layer 3 (outcomes over time).** Track whether the recommended action was taken and whether the flagged blocker materialized — NOT closed-won alone, since deals close despite bad advice and die despite good advice; outcome labels need intermediate signals to be attributable. Slow, noisy, free, unlimited.
+
+**The kicker:** with those labels, "changed" becomes "improved," and the same frontier becomes an optimization instead of a setting — the measurement scaffolding in this demo is the same scaffolding the real system trains on. Nothing is thrown away; the labels get better.
+
+**EverMind tie-in (one line):** Layer 3 is the EverOS integration — Cases record decision + evidence + eventual outcome; Skills are the patterns learned from them. The event's required infrastructure is the memory substrate for exactly this loop.
 
 ### "Couldn't the cheap model be wrong on the deals you routed cheap, and you'd never know?"
 

@@ -109,6 +109,20 @@ Supporting: verdict agreement, blocker agreement, total cost per arm, and premiu
 
 ---
 
+## The operating lifecycle
+
+The dual-arm comparison is the **evaluation harness, not the daily operation.** Running both arms forever would double cost — the system runs in three phases:
+
+**Calibration (occasional).** Run both arms over a sample — the 30 records in this demo — to measure the frontier: at each threshold, what does routing cheap cost in changed decisions? The customer picks their operating point from measured numbers, not vendor defaults.
+
+**Runtime (daily).** One arm only — the adaptive policy. Each record gets exactly one call at its assigned tier. No reference arm, no comparison. This is where the savings live: strictly cheaper than today's premium-everything default, not double.
+
+**Recalibration (periodic).** Data drifts, so the dual-arm eval re-runs on a fresh sample monthly or quarterly, and the threshold moves if the frontier moved. Sample-sized — a rounding error against runtime savings.
+
+This is standard eval practice: nobody runs an A/B test forever. You run it until you trust the winner, ship the winner, and re-test on a cadence.
+
+---
+
 ## Why Snowflake
 
 The business context already lives in the warehouse. Routing on business signals means reading the same tables that feed the BI, which puts the policy next to the data instead of in a separate service with its own copy of the truth.
@@ -128,6 +142,8 @@ And because the spend surface is also Snowflake's, our numbers reconcile against
 **The story.** The $5M renewal at 99%. Reference: premium. Adaptive: cheap. Same verdict, same action. *Same workload, different business context, different reasoning budget.* Then the contestable mid-market deal, where the two tiers visibly diverge and the premium answer synthesizes the conflicting signals better.
 
 **The evidence.** Decisions changed. Agreement. Cost. Frontier. Methodology statement.
+
+**The lifecycle line (say near-verbatim, goes in the T14 script):** *"What you're watching is the calibration run — the thing you do once to choose your policy. Every day after this, only the adaptive arm runs, and this measured table is why you can trust it."*
 
 **Close:** *Enterprise AI shouldn't spend the same intelligence on every decision. It should spend where additional reasoning can still change the outcome.*
 
