@@ -19,7 +19,8 @@ The event page specifies the 4:00 PM deadline and 1–2 builders per team but
 morning check-in or in Discord, first thing.
 
 Pre-staged tonight:
-- [ ] **Repo**: add the remote and push (`git remote add origin <url> && git push -u origin main --tags`). README is the judge-facing front page.
+- [x] **Repo**: pushed — https://github.com/kaushr/AdaptiveBudgetEngine (README is the judge-facing front page).
+- [x] **Hosted app**: https://intellinomics.streamlit.app — Streamlit Community Cloud, offline mode, verified externally (all sliders/heroes/expanders). Auto-redeploys on every push to main. This is the submission link for judges to poke at; localhost offline remains the demo you present from.
 - [ ] **Write-up**: README.md doubles as it (pitch, measured frontier table, how to run, requirement compliance). If a separate form field wants prose, paste README's first two sections.
 - [ ] **Video**: not known to be required — stretch only, never before rehearsal.
 - **3:30 trigger**: whatever state the build is in, start submitting. The

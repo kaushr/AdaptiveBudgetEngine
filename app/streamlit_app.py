@@ -155,7 +155,16 @@ COMPLEXITY_DEF = ("Complexity score = count of active risk signals (0–7) — n
                   "Deterministic; no model involved.")
 
 
+# Brand header — Intellinomics wordmark + lab line, then product title/tagline
+st.markdown(
+    f"<div style='margin-bottom:2px'>"
+    f"<span style='font-size:1.1rem;font-weight:800;letter-spacing:.14em;color:#5B8DEF'>INTELLINOMICS</span>"
+    f"<span style='font-size:.95rem;color:{MUTED};margin-left:12px'>The Intelligence Economics Lab</span>"
+    f"</div>", unsafe_allow_html=True)
 st.title("Decision Budget Engine")
+st.markdown(f"<div style='font-size:1.15rem;color:{MUTED};margin:-8px 0 6px 0'>"
+            f"Optimizing AI reasoning one business decision at a time.</div>",
+            unsafe_allow_html=True)
 st.caption(
     "Workload-level model selection picks the best model for the task. "
     "Decision Budget Engine decides how much reasoning each record within it deserves. "
@@ -392,9 +401,11 @@ with st.expander("All 30 records"):
                               if _b(flags_by_id.loc[oid][col])) or "—"))
     table["probability"] = table.probability.map(lambda v: f"{float(v):.2f}")
 
-    # Highlight the specific cells that differ — one neutral tint (the accent
-    # blue, deliberately not red: no editorializing about which arm is wrong).
-    TINT = "background-color: rgba(59, 130, 246, 0.22)"
+    # Highlight the specific cells that differ — yellow highlighter (bright,
+    # deliberately not red: no editorializing about which arm is wrong).
+    # Dark text on the yellow keeps the enum readable.
+    TINT = ("background-color: rgba(253, 224, 71, 0.92); "
+            "color: #111827; font-weight: 600")
 
     def _diff_tint(r):
         styles = pd.Series("", index=r.index)
@@ -422,7 +433,7 @@ with st.expander("All 30 records"):
             "adaptive_verdict": st.column_config.Column(help="Conclusion from the adaptive policy at the threshold currently selected on the slider."),
             "adaptive_blocker": st.column_config.Column(help="Conclusion from the adaptive policy at the threshold currently selected on the slider."),
         })
-    st.caption("Tinted cells are the fields where the two arms' conclusions differ — "
+    st.caption("Highlighted cells are the fields where the two arms' conclusions differ — "
                "tier plus highlight answers which model disagreed, and on which field.")
 
 with st.expander("Usage detail"):

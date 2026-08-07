@@ -7,6 +7,10 @@ never deal size.
 
 Snowflake × Beta Fund × Evermind hackathon — Track 1, Cost of Intelligence.
 
+**Live demo (hosted, offline mode): https://intellinomics.streamlit.app** —
+reads the measured results committed in this repo; no warehouse connection,
+exactly as labeled on the page.
+
 ## The measured result
 
 Two arms over the same 30 sales opportunities: **reference** (every record →
