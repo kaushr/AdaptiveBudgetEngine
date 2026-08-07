@@ -85,7 +85,17 @@ st.markdown(f"""<style>
 .st-key-dbe_changed_card [data-testid="stMetricValue"],
 .st-key-dbe_waste_card [data-testid="stMetricValue"] {{ color: #fff; }}
 .st-key-dbe_waste_card [data-testid="stCaptionContainer"] {{ color: rgba(255,255,255,.78); }}
-.dbe-action {{ font-size: 1.35rem; font-weight: 650; line-height: 1.35; min-height: 4.6em; }}
+.dbe-action {{ font-size: 1.35rem; font-weight: 650; line-height: 1.35; min-height: 4.6em;
+               color: #fde68a; }}
+.dbe-reasoning {{ font-size: .95rem; line-height: 1.55; color: #e5e7eb; }}
+/* Enum badges, valence-colored: red = needs attention, yellow = settled
+   either way, green = healthy/no obstacle */
+.dbe-enum {{ font-family: "Source Code Pro", monospace; font-size: .85rem;
+             padding: 2px 8px; border-radius: 6px;
+             background: rgba(154,164,178,.12); }}
+.dbe-enum.red {{ color: #f87171; }}
+.dbe-enum.yellow {{ color: #fbbf24; }}
+.dbe-enum.green {{ color: #4ade80; }}
 /* Tiny field labels on the hero cards — subtle, uppercase, hover for detail */
 .dbe-field {{ font-size: .68rem; letter-spacing: .09em; text-transform: uppercase;
               color: {MUTED}; opacity: .85; cursor: help; }}
@@ -410,13 +420,17 @@ for col, tier_key, title in ((colc, "cheap", "cheap · llama3.1-8b"),
                              (colp, "premium", "premium · claude-sonnet-4-5")):
     with col:
         st.markdown(f"##### {title}")
+        _verdict = h[f"{tier_key}_verdict"]
+        _blocker = h[f"{tier_key}_primary_blocker"]
+        _v_cls = {"AT_RISK": "red", "NO_ACTION_NEEDED": "yellow", "ON_TRACK": "green"}[_verdict]
+        _b_cls = "green" if _blocker == "NONE" else "red"
         st.markdown(
             f"<span class='dbe-field' title='verdict — can this forecast be trusted? "
             f"One of ON_TRACK, AT_RISK, NO_ACTION_NEEDED.'>verdict</span> "
-            f"`{h[f'{tier_key}_verdict']}` &nbsp; "
+            f"<span class='dbe-enum {_v_cls}'>{_verdict}</span> &nbsp; "
             f"<span class='dbe-field' title='primary blocker — the single biggest "
             f"obstacle, from a fixed list of eight.'>blocker</span> "
-            f"`{h[f'{tier_key}_primary_blocker']}`", unsafe_allow_html=True)
+            f"<span class='dbe-enum {_b_cls}'>{_blocker}</span>", unsafe_allow_html=True)
         # fixed-size action block keeps the two arms' cards aligned regardless
         # of action length; same size both arms, always the second-largest text
         st.markdown("<div class='dbe-field' title='next best action — the one thing "
@@ -428,8 +442,10 @@ for col, tier_key, title in ((colc, "cheap", "cheap · llama3.1-8b"),
                     "justification, grounded in the record evidence. Shown to humans, "
                     "never auto-scored.'>reasoning</div>", unsafe_allow_html=True)
         # full text, no expander: a lone "more" on one card looked broken, and
-        # the longest reasoning is ~5 lines — cheap real estate
-        st.caption(h[f"{tier_key}_reasoning"])
+        # the longest reasoning is ~5 lines — cheap real estate. Near-white for
+        # dark-background readability (gray was too dim for body text).
+        st.markdown(f"<div class='dbe-reasoning'>{html.escape(h[f'{tier_key}_reasoning'])}</div>",
+                    unsafe_allow_html=True)
 
 evidence = json.loads(h.routed_evidence)
 st.success(
