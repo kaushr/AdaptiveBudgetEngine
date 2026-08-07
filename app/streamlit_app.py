@@ -96,6 +96,11 @@ div.dbe-field {{ margin: 6px 0 1px 0; }}
 .dbe-chip.off {{ color: {MUTED}; background: rgba(154,164,178,.10);
                  border: 1px solid rgba(154,164,178,.25); }}
 .dbe-chip.meta {{ background: rgba(154,164,178,.16); border: 1px solid rgba(154,164,178,.35); }}
+/* Valence colors: red = risk in play, green = favorable, yellow = middling.
+   Inactive risk signals stay muted (.off) — not a factor. */
+.dbe-chip.bad {{ background: rgba(239,68,68,.16); border: 1px solid rgba(239,68,68,.5); }}
+.dbe-chip.good {{ background: rgba(34,197,94,.15); border: 1px solid rgba(34,197,94,.45); }}
+.dbe-chip.warn {{ background: rgba(250,204,21,.13); border: 1px solid rgba(250,204,21,.4); }}
 /* Subtle source chip, top right of the header */
 .dbe-src-chip {{ float: right; font-size: .8rem; color: {MUTED};
                  background: rgba(154,164,178,.10); border: 1px solid rgba(154,164,178,.22);
@@ -381,16 +386,21 @@ h = heroes[heroes.kind == kind].iloc[0]
 st.markdown(f"**{h['opp_id']} — {h['name']}** · {md_amount(h.amount)} · "
             f"p={float(h.probability):.2f} · complexity {h.complexity_score}")
 
-# Full attribute set: the seven risk signals as chips (lit = active, so the
-# complexity score is visibly the count of lit chips) plus stage/strategic.
+# Full attribute set: the seven risk signals as chips (red = active risk, so
+# the complexity score is visibly the count of red chips; muted = not a
+# factor) plus stage/strategic/recency colored by valence.
 opp_full = data["opportunities"].set_index("opp_id").loc[h["opp_id"]]
 chips = "".join(
-    f"<span class='dbe-chip {'on' if _b(opp_full[col]) else 'off'}'>"
+    f"<span class='dbe-chip {'bad' if _b(opp_full[col]) else 'off'}'>"
     f"{'✓ ' if _b(opp_full[col]) else ''}{label}</span>"
     for col, label, _ in RISK_SIGNALS)
-chips += (f"<span class='dbe-chip meta'>stage: {opp_full.stage}</span>"
-          f"<span class='dbe-chip meta'>strategic: {'yes' if _b(opp_full.strategic_account) else 'no'}</span>"
-          f"<span class='dbe-chip meta'>{opp_full.days_since_activity} days since activity</span>")
+_stage_cls = "good" if opp_full.stage == "CONTRACT" else "warn"
+_strat_cls = "good" if _b(opp_full.strategic_account) else "warn"
+_days = int(opp_full.days_since_activity)
+_days_cls = "good" if _days <= 7 else ("warn" if _days <= 21 else "bad")
+chips += (f"<span class='dbe-chip {_stage_cls}'>stage: {opp_full.stage}</span>"
+          f"<span class='dbe-chip {_strat_cls}'>strategic: {'yes' if _b(opp_full.strategic_account) else 'no'}</span>"
+          f"<span class='dbe-chip {_days_cls}'>{_days} days since activity</span>")
 st.markdown(f"<div>{chips}</div>", unsafe_allow_html=True)
 st.caption(COMPLEXITY_DEF + " Both answers below respond to the question shown in "
            "'The question' expander at the bottom of the page.")
