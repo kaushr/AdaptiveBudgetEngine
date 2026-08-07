@@ -73,10 +73,18 @@ st.markdown(f"""<style>
 [data-testid="stMetricValue"] {{ font-size: 2.4rem; font-weight: 700; }}
 [data-testid="stMetricLabel"] {{ font-size: .85rem; color: {MUTED}; }}
 [data-testid="stCaptionContainer"] {{ color: {MUTED}; font-size: .95rem; }}
-.dbe-card {{ border-radius: 8px; padding: 12px 14px; }}
-.dbe-card-label {{ font-size: .85rem; color: rgba(255,255,255,.78); }}
-.dbe-card-value {{ font-size: 2.4rem; font-weight: 700; color: #fff; line-height: 1.15; }}
-.dbe-card-sub {{ font-size: .85rem; color: rgba(255,255,255,.78); }}
+/* Accent cards are real st.metric elements inside keyed containers, so their
+   tooltips use the same ?-icon mechanism as every other metric on the page.
+   Only the background/padding/colors are custom. */
+.st-key-dbe_changed_card, .st-key-dbe_waste_card {{
+    border-radius: 8px; padding: 12px 14px; }}
+.st-key-dbe_changed_card {{ background: #1a3d5c; }}
+.st-key-dbe_waste_card {{ background: #7a5200; }}
+.st-key-dbe_changed_card [data-testid="stMetricLabel"],
+.st-key-dbe_waste_card [data-testid="stMetricLabel"] {{ color: rgba(255,255,255,.85); }}
+.st-key-dbe_changed_card [data-testid="stMetricValue"],
+.st-key-dbe_waste_card [data-testid="stMetricValue"] {{ color: #fff; }}
+.st-key-dbe_waste_card [data-testid="stCaptionContainer"] {{ color: rgba(255,255,255,.78); }}
 .dbe-action {{ font-size: 1.35rem; font-weight: 650; line-height: 1.35; min-height: 4.6em; }}
 .dbe-chip {{ display: inline-block; padding: 2px 10px; border-radius: 12px;
              font-size: .8rem; margin: 2px 6px 2px 0; white-space: nowrap; }}
@@ -185,16 +193,12 @@ c1.metric("Cost vs reference", f"{row.cost_vs_reference_pct:.0f}%",
                f"\\${ref.total_dollars:.4f} = {row.cost_vs_reference_pct:.0f}%. "
                "Lower is cheaper — the paired question is whether conclusions changed.")
 with c2:
-    _changed_tip = html.escape(
-        "How many records the two policies answered differently. Math: count of "
-        "records where the verdict OR the primary blocker differs — exact string "
-        f"match on fixed enums, no model judging. Here: {int(row.decisions_changed)} of 30.")
-    st.markdown(
-        f"<div class='dbe-card' style='background:#1a3d5c;text-align:center' "
-        f"title='{_changed_tip}'>"
-        f"<div class='dbe-card-label'>Decisions changed ⓘ</div>"
-        f"<div class='dbe-card-value'>{int(row.decisions_changed)} of 30</div>"
-        f"</div>", unsafe_allow_html=True)
+    with st.container(key="dbe_changed_card"):
+        st.metric("Decisions changed", f"{int(row.decisions_changed)} of 30",
+                  help="How many records the two policies answered differently. "
+                       "Math: count of records where the verdict OR the primary "
+                       "blocker differs — exact string match on fixed enums, no "
+                       f"model judging. Here: {int(row.decisions_changed)} of 30.")
 _v_match = round(row.verdict_agreement_pct * 30 / 100)
 c3.metric("Verdict agreement", f"{row.verdict_agreement_pct:.0f}%",
           help="How often both policies reached the same verdict. "
@@ -292,22 +296,19 @@ with beat1:
         _all_waste = summary[summary.policy == "adaptive"].waste_count.astype(int).unique()
         _robust = (f" It stays {int(_all_waste[0])} at every threshold — the most "
                    f"robust overspend in the set.") if len(_all_waste) == 1 else ""
-        _waste_tip = html.escape(
-            "Premium money that bought nothing: records the policy routed cheap where "
-            "the cheap model reached the identical verdict and blocker, so paying "
-            "premium changed no answer. Math: the premium policy's cost on just those "
-            f"records ({_waste_names}) = ${row.waste_dollars:.4f}.{_robust}")
-        st.markdown(
-            f"<div class='dbe-card' style='background:#7a5200' title='{_waste_tip}'>"
-            f"<div class='dbe-card-label'>Spent on decisions that were already made ⓘ</div>"
-            f"<div class='dbe-card-value'>&#36;{row.waste_dollars:.4f} "
-            f"on {int(row.waste_count)} records</div>"
-            f"<div class='dbe-card-sub'>Records the policy routed cheap where the "
-            f"cheap tier reached identical conclusions to premium ({row.waste_records.replace(';', ', ')}). "
-            f"Of the {int(row.cheap_n)} records routed cheap at this threshold, these "
-            f"{int(row.waste_count)} reached identical conclusions (spend bought nothing); "
-            f"the remainder are counted in decisions changed.</div>"
-            f"</div>", unsafe_allow_html=True)
+        with st.container(key="dbe_waste_card"):
+            st.metric("Spent on decisions that were already made",
+                      f"${row.waste_dollars:.4f} on {int(row.waste_count)} records",
+                      help="Premium money that bought nothing: records the policy "
+                           "routed cheap where the cheap model reached the identical "
+                           "verdict and blocker, so paying premium changed no answer. "
+                           "Math: the premium policy's cost on just those records "
+                           f"({_waste_names}) = \\${row.waste_dollars:.4f}.{_robust}")
+            st.caption(f"Records the policy routed cheap where the cheap tier reached "
+                       f"identical conclusions to premium ({row.waste_records.replace(';', ', ')}). "
+                       f"Of the {int(row.cheap_n)} records routed cheap at this threshold, these "
+                       f"{int(row.waste_count)} reached identical conclusions (spend bought "
+                       f"nothing); the remainder are counted in decisions changed.")
 
 st.divider()
 
