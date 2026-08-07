@@ -7,3 +7,7 @@ base = "dark"
 primaryColor = "#3B82F6"
 # Projector-distance readability: raise the base size everything scales from.
 baseFontSize = 18
+
+[client]
+# Hide the developer toolbar chrome (deploy/edit buttons) for a clean audience view
+toolbarMode = "minimal"
