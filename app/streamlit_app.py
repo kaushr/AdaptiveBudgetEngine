@@ -87,7 +87,12 @@ st.markdown(f"""<style>
 .st-key-dbe_waste_card [data-testid="stCaptionContainer"] {{ color: rgba(255,255,255,.78); }}
 .dbe-action {{ font-size: 1.35rem; font-weight: 650; line-height: 1.35; min-height: 4.6em;
                color: #fde68a; }}
-.dbe-reasoning {{ font-size: .95rem; line-height: 1.55; color: #e5e7eb; }}
+.dbe-reasoning {{ font-size: .95rem; line-height: 1.55; color: #e5e7eb;
+                  margin-bottom: 6px; }}
+/* Arm cards: subtle boxes around each tier's answer */
+.st-key-dbe_arm_cheap, .st-key-dbe_arm_premium {{
+    background: rgba(154,164,178,.07); border: 1px solid rgba(154,164,178,.18);
+    border-radius: 8px; padding: 14px 16px; }}
 /* Enum badges, valence-colored: red = needs attention, yellow = settled
    either way, green = healthy/no obstacle */
 .dbe-enum {{ font-family: "Source Code Pro", monospace; font-size: .85rem;
@@ -422,7 +427,7 @@ st.caption(COMPLEXITY_DEF + " Both answers below respond to the question shown i
 colc, colp = st.columns(2)
 for col, tier_key, title in ((colc, "cheap", "cheap · llama3.1-8b"),
                              (colp, "premium", "premium · claude-sonnet-4-5")):
-    with col:
+    with col, st.container(key=f"dbe_arm_{tier_key}"):
         st.markdown(f"##### {title}")
         _verdict = h[f"{tier_key}_verdict"]
         _blocker = h[f"{tier_key}_primary_blocker"]
