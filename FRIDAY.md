@@ -46,9 +46,13 @@ the first build-block task.
    confirm retrieval works from the venue. If it doesn't: the Aug 6 retrieval
    output is committed in the session history — screenshot fallback, and say so
    plainly if asked.
-3. **Demo machine click-through:** `.venv/bin/streamlit run app/streamlit_app.py`
-   (offline path, zero dependencies) — all three slider stops, all three heroes,
-   all three expanders, once.
+3. **Demo machine setup — launch BOTH, present from live:** run
+   `./demo-offline.sh` (port 8501, tab "DBE · OFFLINE") and `./demo-live.sh`
+   (port 8502, tab "DBE · LIVE") in two terminals at setup. Click through the
+   live tab once — all three slider stops, heroes, expanders. **Present from
+   the live tab;** if WiFi or Snowflake hiccups mid-demo, Cmd+Tab to the
+   offline tab — same screen, same numbers, no restart. The Source badge and
+   the tab title both say which one you're on.
 4. **Reconciliation Q&A armor (optional, 2 min):** Thursday's calls will have
    landed in `SNOWFLAKE.ACCOUNT_USAGE.CORTEX_FUNCTIONS_USAGE_HISTORY` by morning —
    run the workbook §6 reconciliation query; if totals line up, that's one

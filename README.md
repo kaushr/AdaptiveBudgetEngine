@@ -32,7 +32,7 @@ Offline (the demo path — reads measured results, zero live calls):
 ```bash
 /opt/homebrew/bin/python3.11 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-.venv/bin/streamlit run app/streamlit_app.py
+./demo-offline.sh
 ```
 
 Live mode — same UI, same code path, reading the five result tables from
@@ -41,12 +41,16 @@ exists only in `scripts/run_arms.py`):
 
 ```bash
 .venv/bin/pip install snowflake-connector-python   # once, live mode only
-DBE_SOURCE=snowflake .venv/bin/streamlit run app/streamlit_app.py
+./demo-live.sh
 ```
 
 Requires a `[connections.snowflake]` block in `.streamlit/secrets.toml`
 (gitignored — account, user, key-pair auth; mirror `~/.snowflake/config.toml`).
-The caption under the title shows which source is active. Rebuilding everything
+The Source line under the title shows which mode is running — a launch
+decision by design (no in-UI toggle): it's a provenance claim, not a view
+preference. Ports are pinned (offline 8501, live 8502) so both modes run side
+by side in two browser tabs — titled "DBE · OFFLINE" and "DBE · LIVE" — with
+the offline tab as the instant fallback while presenting from live. Rebuilding everything
 from scratch is `scripts/` in order (see repo map) — 61 short `AI_COMPLETE`
 calls, pennies of credit.
 

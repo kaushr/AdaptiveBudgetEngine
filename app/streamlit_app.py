@@ -17,7 +17,21 @@ import os
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="Decision Budget Engine", layout="wide")
+
+def _source():
+    if os.environ.get("DBE_SOURCE"):
+        return os.environ["DBE_SOURCE"]
+    try:
+        return st.secrets["dbe"]["source"]
+    except Exception:
+        return "local"
+
+
+# Distinct browser-tab titles so the two modes are unambiguous when both run
+# side by side (offline on 8501, live on 8502).
+st.set_page_config(
+    page_title="DBE · LIVE" if _source() == "snowflake" else "DBE · OFFLINE",
+    layout="wide")
 
 # One style scale for the whole page (readability pass):
 #   title (st.title) > metric values (2.4rem, the most prominent) >
@@ -44,15 +58,6 @@ st.markdown(f"""<style>
 
 RESULTS_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "results"))
 TABLES = ("run_summary", "model_runs", "policy_decisions", "heroes", "opportunities")
-
-
-def _source():
-    if os.environ.get("DBE_SOURCE"):
-        return os.environ["DBE_SOURCE"]
-    try:
-        return st.secrets["dbe"]["source"]
-    except Exception:
-        return "local"
 
 
 @st.cache_data
@@ -116,9 +121,15 @@ st.title("Decision Budget Engine")
 st.caption(
     "Workload-level model selection picks the best model for the task. "
     "Decision Budget Engine decides how much reasoning each record within it deserves. "
-    f"Source: {'Snowflake' if _source() == 'snowflake' else 'results table (offline fallback)'} · "
     "30 opportunities · two arms, measured."
 )
+# Provenance line — deliberately its own element, readable at projector
+# distance. Mode is a launch decision (demo-offline.sh / demo-live.sh),
+# never a UI toggle.
+_src_label = ("Source: Snowflake — DECISION_BUDGET.DEMO" if _source() == "snowflake"
+              else "Source: results tables (offline fallback)")
+st.markdown(f"<span class='dbe-chip meta' style='font-size:1rem;font-weight:600;"
+            f"padding:4px 14px'>{_src_label}</span>", unsafe_allow_html=True)
 
 # ---- Beat 1: the bill (filled after the slider sets the operating point) ----
 beat1 = st.container()
