@@ -92,6 +92,31 @@ st.markdown(f"""<style>
 .dbe-chip.off {{ color: {MUTED}; background: rgba(154,164,178,.10);
                  border: 1px solid rgba(154,164,178,.25); }}
 .dbe-chip.meta {{ background: rgba(154,164,178,.16); border: 1px solid rgba(154,164,178,.35); }}
+/* Subtle source chip, top right of the header */
+.dbe-src-chip {{ float: right; font-size: .8rem; color: {MUTED};
+                 background: rgba(154,164,178,.10); border: 1px solid rgba(154,164,178,.22);
+                 border-radius: 12px; padding: 3px 12px; margin-top: 4px; }}
+/* Reference-policy tile: navy, mirroring the amber waste tile */
+.st-key-dbe_ref_card {{ background: #1a3d5c; border-radius: 8px; padding: 12px 14px; }}
+.st-key-dbe_ref_card [data-testid="stMetricLabel"] {{ color: rgba(255,255,255,.85); }}
+.st-key-dbe_ref_card [data-testid="stMetricValue"] {{ color: #fff; }}
+.st-key-dbe_ref_card [data-testid="stCaptionContainer"] {{ color: rgba(255,255,255,.78); }}
+/* Subtle boxes for the non-headline metrics */
+.st-key-dbe_tile_cost, .st-key-dbe_tile_verdict, .st-key-dbe_tile_cheap {{
+    background: rgba(154,164,178,.08); border: 1px solid rgba(154,164,178,.20);
+    border-radius: 8px; padding: 12px 14px; }}
+/* The key-message banner: the 10k/week projection */
+.st-key-dbe_projection {{ background: rgba(59,130,246,.12);
+    border: 1px solid rgba(59,130,246,.45); border-radius: 8px;
+    padding: 10px 18px 2px 18px; margin-top: 10px; }}
+.dbe-proj-val {{ font-size: 1.5rem; font-weight: 700; }}
+/* Slider: taller, bigger thumb label; built-in tick bar replaced by a
+   full stops row below (it only ever showed the endpoints) */
+[data-testid="stSliderTickBar"] {{ display: none; }}
+.st-key-dbe_slider {{ padding: 6px 0 0 0; }}
+.st-key-dbe_slider [data-testid="stSliderThumbValue"] {{ font-size: 1.05rem; font-weight: 700; }}
+.dbe-stops {{ display: flex; justify-content: space-between;
+              font-size: .95rem; margin: 4px 2px 0 2px; }}
 </style>""", unsafe_allow_html=True)
 
 RESULTS_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "results"))
@@ -155,11 +180,14 @@ COMPLEXITY_DEF = ("Complexity score = count of active risk signals (0–7) — n
                   "Deterministic; no model involved.")
 
 
-# Brand header — Intellinomics wordmark + lab line, then product title/tagline
+# Brand header — Intellinomics wordmark + lab line, source chip top right
+_src_label = ("Live from Snowflake · DECISION_BUDGET.DEMO" if _source() == "snowflake"
+              else "Measured run · Snowflake Cortex · Aug 7")
 st.markdown(
     f"<div style='margin-bottom:2px'>"
     f"<span style='font-size:1.1rem;font-weight:800;letter-spacing:.14em;color:#5B8DEF'>INTELLINOMICS</span>"
     f"<span style='font-size:.95rem;color:{MUTED};margin-left:12px'>The Intelligence Economics Lab</span>"
+    f"<span class='dbe-src-chip'>{_src_label}</span>"
     f"</div>", unsafe_allow_html=True)
 st.title("Decision Budget Engine")
 st.markdown(f"<div style='font-size:1.15rem;color:{MUTED};margin:-8px 0 6px 0'>"
@@ -170,13 +198,8 @@ st.caption(
     "Decision Budget Engine decides how much reasoning each record within it deserves. "
     "30 opportunities · two arms, measured."
 )
-# Provenance line — deliberately its own element, readable at projector
-# distance. Mode is a launch decision (demo-offline.sh / demo-live.sh),
-# never a UI toggle.
-_src_label = ("Source: Snowflake — DECISION_BUDGET.DEMO" if _source() == "snowflake"
-              else "Source: results tables (offline fallback)")
-st.markdown(f"<span class='dbe-chip meta' style='font-size:1rem;font-weight:600;"
-            f"padding:4px 14px'>{_src_label}</span>", unsafe_allow_html=True)
+# Provenance chip lives top-right in the brand header; mode remains a launch
+# decision (demo-offline.sh / demo-live.sh), never a UI toggle.
 
 # ---- Beat 1: the bill (filled after the slider sets the operating point) ----
 beat1 = st.container()
@@ -185,22 +208,30 @@ st.divider()
 
 # ---- Beat 2: the slider --------------------------------------------------
 st.subheader("How settled must a deal be before we stop paying for reasoning?")
-threshold = st.select_slider(
-    label="High-confidence threshold — three measured operating points",
-    options=[0.98, 0.95, 0.90],
-    value=0.98,
-    format_func=lambda v: {0.98: "0.98 · Conservative", 0.95: "0.95 · Balanced",
-                           0.90: "0.90 · Savings-oriented"}[v],
-)
+STOP_LABELS = {0.98: "0.98 · Conservative", 0.95: "0.95 · Balanced",
+               0.90: "0.90 · Savings-oriented"}
+with st.container(key="dbe_slider"):
+    threshold = st.select_slider(
+        label="High-confidence threshold — three measured operating points",
+        options=[0.98, 0.95, 0.90],
+        value=0.98,
+        format_func=lambda v: STOP_LABELS[v],
+    )
+    stops = "".join(
+        f"<span style='{'color:#5B8DEF;font-weight:700' if v == threshold else f'color:{MUTED}'}'>"
+        f"{STOP_LABELS[v]}</span>" for v in (0.98, 0.95, 0.90))
+    st.markdown(f"<div class='dbe-stops'>{stops}</div>", unsafe_allow_html=True)
 row = summary[(summary.policy == "adaptive")
               & (summary.threshold.astype(float) == threshold)].iloc[0]
 
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("Cost vs reference", f"{row.cost_vs_reference_pct:.0f}%",
-          help="What the adaptive policy costs as a share of premium-everything. "
-               f"Math: adaptive cost ÷ reference cost = \\${row.total_dollars:.4f} ÷ "
-               f"\\${ref.total_dollars:.4f} = {row.cost_vs_reference_pct:.0f}%. "
-               "Lower is cheaper — the paired question is whether conclusions changed.")
+with c1:
+    with st.container(key="dbe_tile_cost"):
+        st.metric("Cost vs reference", f"{row.cost_vs_reference_pct:.0f}%",
+                  help="What the adaptive policy costs as a share of premium-everything. "
+                       f"Math: adaptive cost ÷ reference cost = \\${row.total_dollars:.4f} ÷ "
+                       f"\\${ref.total_dollars:.4f} = {row.cost_vs_reference_pct:.0f}%. "
+                       "Lower is cheaper — the paired question is whether conclusions changed.")
 with c2:
     with st.container(key="dbe_changed_card"):
         st.metric("Decisions changed", f"{int(row.decisions_changed)} of 30",
@@ -209,15 +240,19 @@ with c2:
                        "blocker differs — exact string match on fixed enums, no "
                        f"model judging. Here: {int(row.decisions_changed)} of 30.")
 _v_match = round(row.verdict_agreement_pct * 30 / 100)
-c3.metric("Verdict agreement", f"{row.verdict_agreement_pct:.0f}%",
-          help="How often both policies reached the same verdict. "
-               f"Math: {_v_match} of 30 matching ÷ 30 = {row.verdict_agreement_pct:.0f}%. "
-               "Blocker agreement is scored the same way separately "
-               f"({row.blocker_agreement_pct:.0f}%).")
-c4.metric("Routed cheap", f"{row.pct_cheap:.0f}%",
-          help="Share of records the policy sent to the cheap model at this threshold. "
-               f"Math: {int(row.cheap_n)} of 30 = {row.pct_cheap:.1f}%. Rises as the "
-               "threshold loosens — it's the mechanism behind falling cost.")
+with c3:
+    with st.container(key="dbe_tile_verdict"):
+        st.metric("Verdict agreement", f"{row.verdict_agreement_pct:.0f}%",
+                  help="How often both policies reached the same verdict. "
+                       f"Math: {_v_match} of 30 matching ÷ 30 = {row.verdict_agreement_pct:.0f}%. "
+                       "Blocker agreement is scored the same way separately "
+                       f"({row.blocker_agreement_pct:.0f}%).")
+with c4:
+    with st.container(key="dbe_tile_cheap"):
+        st.metric("Routed cheap", f"{row.pct_cheap:.0f}%",
+                  help="Share of records the policy sent to the cheap model at this threshold. "
+                       f"Math: {int(row.cheap_n)} of 30 = {row.pct_cheap:.1f}%. Rises as the "
+                       "threshold loosens — it's the mechanism behind falling cost.")
 st.caption(f"Blocker agreement: {row.blocker_agreement_pct:.0f}%. "
            "A decision changed when the two arms reach different conclusions "
            "(verdict or primary blocker) — scored by exact match, no judge model.")
@@ -287,19 +322,17 @@ st.info(
 with beat1:
     b1, b2 = st.columns(2)
     with b1:
-        st.metric("Reference policy — every record to the premium model",
-                  f"${ref.total_dollars:.4f}",
-                  help="What it cost to send all 30 opportunities to the premium "
-                       "model — the status quo this comparison is against. Math: sum "
-                       "of the 30 premium calls' measured token costs (input + output "
-                       "tokens × published Cortex rates) = "
-                       f"\\${ref.total_dollars:.4f} ({ref.total_credits:.6f} credits).")
-        st.caption(f"Adaptive at {threshold:.2f} decomposes: "
-                   f"cheap {md_usd(row.cheap_credits * 3)} · balanced {md_usd(row.balanced_credits * 3)} · "
-                   f"premium {md_usd(row.premium_credits * 3)}")
-        st.caption(f"At 10,000 records/week: **{md_usd(ref.projected_10k_weekly_dollars, 2)} → "
-                   f"{md_usd(row.projected_10k_weekly_dollars, 2)}** — linear projection: "
-                   f"measured per-record cost × 10,000 (projected, not measured)")
+        with st.container(key="dbe_ref_card"):
+            st.metric("Reference policy — every record to the premium model",
+                      f"${ref.total_dollars:.4f}",
+                      help="What it cost to send all 30 opportunities to the premium "
+                           "model — the status quo this comparison is against. Math: sum "
+                           "of the 30 premium calls' measured token costs (input + output "
+                           "tokens × published Cortex rates) = "
+                           f"\\${ref.total_dollars:.4f} ({ref.total_credits:.6f} credits).")
+            st.caption(f"Adaptive at {threshold:.2f} decomposes: "
+                       f"cheap {md_usd(row.cheap_credits * 3)} · balanced {md_usd(row.balanced_credits * 3)} · "
+                       f"premium {md_usd(row.premium_credits * 3)}")
     with b2:
         _waste_names = row.waste_records.replace(";", " + ")
         _all_waste = summary[summary.policy == "adaptive"].waste_count.astype(int).unique()
@@ -318,6 +351,14 @@ with beat1:
                        f"Of the {int(row.cheap_n)} records routed cheap at this threshold, these "
                        f"{int(row.waste_count)} reached identical conclusions (spend bought "
                        f"nothing); the remainder are counted in decisions changed.")
+
+    # The key message, full width and unmissable: what this costs at scale
+    with st.container(key="dbe_projection"):
+        st.markdown(f"<span class='dbe-proj-val'>At 10,000 records/week: "
+                    f"{md_usd(ref.projected_10k_weekly_dollars, 2)} → "
+                    f"{md_usd(row.projected_10k_weekly_dollars, 2)}</span>",
+                    unsafe_allow_html=True)
+        st.caption("Linear projection: measured per-record cost × 10,000 — projected, not measured.")
 
 st.divider()
 
