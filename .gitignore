@@ -23,3 +23,6 @@ data/results/call_cache.json
 
 # Rebuild backup dir (restore path is git or this dir)
 data/results.pre-rebuild.bak/
+
+# Working checklist, local only (deleted from the public repo on purpose)
+FRIDAY.md
