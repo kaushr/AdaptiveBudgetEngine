@@ -22,6 +22,7 @@ import streamlit as st
 # cannot drift from what was really sent.
 sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "scripts")))
 from run_arms import PROMPT_TEMPLATE  # noqa: E402
+from pricing import TIER_MODEL  # noqa: E402 — the tier→model ladder, single source
 
 # Local policy provenance — the guaranteed fallback. The demo NEVER depends
 # on a live third-party call: EverOS is tried once (short timeout) and any
@@ -436,7 +437,16 @@ with st.expander("Usage detail"):
                   output_tokens=("output_tokens", "sum"), credits=("credits", "sum")))
     usage["cost ($)"] = (usage.credits * 3.00).map(lambda v: f"{v:.4f}")
     usage["credits"] = usage.credits.map(lambda v: f"{v:.6f}")
+    # tier ladder order (cheap → balanced → premium), not alphabetical — the
+    # cost column should read as a progression, and the mapping is explicit
+    _model_tier = {m: t for t, m in TIER_MODEL.items()}
+    _ladder = {t: i for i, t in enumerate(TIER_MODEL)}
+    usage.insert(0, "tier", usage.model.map(_model_tier))
+    usage = usage.sort_values("tier", key=lambda s: s.map(_ladder))
     st.dataframe(usage, hide_index=True, width='stretch', column_config={
+        "tier": st.column_config.Column(
+            help="The price-quality rung on the ladder — cheap, balanced, premium. "
+                 "Each tier maps to one model (next column)."),
         "model": st.column_config.Column(help="The Cortex model behind a tier — cheap=llama3.1-8b, "
                                          "balanced=mistral-large2, premium=claude-sonnet-4-5."),
         "calls": st.column_config.Column(help="Unique model calls: one per (record, tier) pair. A call used by "
