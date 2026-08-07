@@ -2,7 +2,19 @@
 
 **Living document — update as we go.** This gets a new dev machine from zero to "can run the build" with no interactive prompts required.
 
-Last updated: Aug 6, 2026 (Kaushik's machine, verified working end to end)
+Last updated: Aug 6, 2026 (Kaushik's machine, verified working end to end — Snowflake and EverMind both tested)
+
+---
+
+## Event facts (from the Luma page)
+
+**Snowflake × Beta Fund × Evermind Agent & Token Economy Hackathon** — Menlo Park, CA. Teams of 1–2.
+
+- **Track we're entering: Track 1 — "Cost of Intelligence" (cheaper AI execution)** — direct fit for Decision Budget Engine. (Other tracks: Value of Intelligence, Wildcard.)
+- **Requirement: every team must build with EverMind infrastructure** — EverOS for memory, personalization, context, or learning layers, while leveraging Snowflake. See §12 for our verified EverOS setup.
+- **Schedule:** 9:00 check-in → 10:00–11:00 workshops → 11:00–4:00 build (lunch at 12) → 4:00–5:00 demos (**3-minute limit**) → 5:00 voting/awards. The workbook timeline (11:00 start, 2:30 hard stop, 2:45 demo target) maps onto this.
+- **Prizes:** $600 / $500 / $400 + $200 standout (with UpScaleX 1:1).
+- **Partner credits:** Snowflake (Cortex access + credits), EverMind (EverOS credits + engineering support).
 
 ---
 
@@ -301,3 +313,54 @@ If it routes through the plugin → `cortex` CLI → your connection and returns
 - [ ] Function Studio availability — ask in event Discord
 - [ ] Repo scaffold + fallback table mechanism
 - [ ] UI framework decision (Streamlit assumed, not yet confirmed)
+- [ ] **EverOS integration design** — where EverOS fits in the architecture (event requires it, see §12). Leading candidate: memory/learning layer over routing decisions — matches the "policy learned from outcomes" production story in the judge prep.
+
+---
+
+## 12. EverMind / EverOS (event requirement — verified working Aug 6, 2026)
+
+The event **requires** every team to build with EverMind's EverOS (memory / personalization / context / learning layer). Account created and cloud API tested end to end.
+
+### What it is
+
+EverOS is an agent memory layer: you feed it conversation messages (or documents), it asynchronously extracts structured "episodes" and atomic facts, and you retrieve them via semantic search. Cloud API at `https://api.evermind.ai`; an open-source self-hosted option exists ([github.com/EverMind-AI/EverOS](https://github.com/EverMind-AI/EverOS)) but we use the cloud API — no local server to babysit on demo day, and EverMind is providing credits.
+
+### Auth
+
+- API key from the [everos.evermind.ai](https://everos.evermind.ai) dashboard.
+- Stored in `local/evermind.env` (the `local/` folder is gitignored — key never enters the repo or the docs) as `EVERMIND_API_KEY=...`
+- Sent as a Bearer token: `Authorization: Bearer $EVERMIND_API_KEY`
+
+### Verified round trip (all three tested)
+
+```bash
+source local/evermind.env
+
+# 1. Add — NOTE: returns {"status":"queued"} — extraction is ASYNC
+curl -sS -X POST https://api.evermind.ai/api/v2/memory/add \
+  -H "Authorization: Bearer $EVERMIND_API_KEY" -H "Content-Type: application/json" \
+  -d "{\"session_id\": \"s1\", \"user_id\": \"kaushik\",
+       \"messages\": [{\"role\": \"user\", \"sender_id\": \"kaushik\",
+                       \"timestamp\": $(date +%s)000, \"content\": \"...\"}]}"
+
+# 2. Flush — forces extraction so search can find it immediately
+curl -sS -X POST https://api.evermind.ai/api/v2/memory/flush \
+  -H "Authorization: Bearer $EVERMIND_API_KEY" -H "Content-Type: application/json" \
+  -d '{"session_id": "s1", "user_id": "kaushik"}'
+
+# 3. Search — returns episodes with summaries + atomic_facts + relevance scores
+curl -sS -X POST https://api.evermind.ai/api/v2/memory/search \
+  -H "Authorization: Bearer $EVERMIND_API_KEY" -H "Content-Type: application/json" \
+  -d '{"query": "...", "user_id": "kaushik"}'
+```
+
+### API gotchas (all hit and solved during setup — don't re-debug)
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| 400 `sender_id is required` | Each message needs `sender_id`, not just `role` | Add `"sender_id"` to every message object |
+| 400 `cannot unmarshal string ... timestamp of type int64` | ISO-8601 timestamp string | Timestamp must be numeric |
+| 422 `must be a unix millisecond timestamp` | Seconds instead of milliseconds | Use epoch **ms**: `$(date +%s)000` |
+| Search returns nothing right after add | `add` only queues; extraction is async | Call `/api/v2/memory/flush` first (returns `{"status":"extracted"}`) |
+
+**Caution on extracted summaries:** the extraction model paraphrases and can embellish — our literal test message "setup test ... says OK" came back as the project "had been approved." Fine for memory/context retrieval; do not treat extracted summaries as verbatim records in anything user-facing.
