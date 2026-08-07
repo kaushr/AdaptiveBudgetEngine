@@ -56,7 +56,10 @@ the first build-block task.
    ```bash
    python3 scripts/everos_log.py --search "OPP-008"
    ```
-   — confirm retrieval works from the venue. This exact command is also the
+   — confirm retrieval works from the venue. Also glance at "The policy"
+   expander: the provenance chip should read **policy record: EverOS memory**
+   when online (it silently falls back to the identical local definition when
+   not — that's designed, not broken). This search command is also the
    Q&A response to "do you actually use EverOS?" (showing retrieval beats
    describing it — see the script's Q&A appendix). It fails gracefully with a
    one-line message if offline; if the venue blocks it, say so plainly and

@@ -56,10 +56,78 @@ def decision_message(d, run_row):
             f"(verdict {run_row['verdict']}, primary blocker {run_row['primary_blocker']}).")
 
 
+POLICY_SESSION = "dbe-policy-store"
+POLICY_ARTIFACT = (
+    "Routing policy artifact for the Decision Budget Engine. "
+    "policy-version: v1. author: hand-authored. "
+    "basis: expert judgment, not learned. "
+    "Rules in order: (1) if close probability is at or above the "
+    "high-confidence threshold (operating points 0.98, 0.95, 0.90) route "
+    "CHEAP — certainty vetoes spend; (2) if probability is 0.10 or lower "
+    "route CHEAP — already lost; (3) if decision complexity score is 4 or "
+    "higher route PREMIUM; (4) strategic accounts get at least BALANCED — a "
+    "floor, never a bypass; (5) otherwise BALANCED. "
+    "This version was written by a human. Version v2 would be learned from "
+    "labeled decisions accumulated in this memory.")
+
+
+def publish_policy():
+    """Write the active policy to EverOS as a versioned, provenance-stamped
+    artifact. Honesty is the point: v1 is hand-authored and says so."""
+    out = post("add", {"session_id": POLICY_SESSION, "user_id": USER_ID,
+                       "messages": [{"role": "user", "sender_id": USER_ID,
+                                     "timestamp": int(time.time() * 1000),
+                                     "content": POLICY_ARTIFACT}]})
+    print("publish:", out["data"]["status"])
+    for attempt in range(4):
+        out = post("flush", {"session_id": POLICY_SESSION, "user_id": USER_ID})
+        print(f"flush attempt {attempt + 1}: {out['data']['status']}")
+        if out["data"]["status"] == "extracted":
+            break
+        time.sleep(15)
+
+
+def fetch_policy_provenance(timeout=4):
+    """Fetch the active policy's provenance from EverOS. Returns a dict
+    {version, author, basis, score} or raises — callers must fall back to
+    the local definition; the demo never depends on this call."""
+    import re
+    req = urllib.request.Request(
+        f"{BASE}/search",
+        data=json.dumps({"query": "hand-authored policy-version v1 expert judgment "
+                                  "not learned routing policy artifact",
+                         "user_id": USER_ID}).encode(),
+        headers={"Authorization": f"Bearer {api_key()}",
+                 "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        out = json.loads(resp.read())
+    for e in out["data"]["episodes"]:
+        text = e.get("episode", "") + " " + e.get("summary", "") + " " + \
+            " ".join(f.get("content", "") for f in e.get("atomic_facts", []))
+        # extraction paraphrases: "policy-version: v1" comes back as
+        # "The policy version is v1.0" — match both, normalize v1.0 -> v1
+        m = re.search(r"policy[- ]version\s*(?:is|:)?\s*(v[\d.]+)", text, re.I)
+        if m and "hand-authored" in text.lower():
+            return {"version": "v" + m.group(1).lstrip("vV").split(".")[0],
+                    "author": "hand-authored",
+                    "basis": "expert judgment, not learned",
+                    "score": e.get("score", 0.0)}
+    raise LookupError("policy artifact not found in EverOS")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--search", help="retrieval demo: search the decision log")
+    ap.add_argument("--publish-policy", action="store_true",
+                    help="write the versioned policy artifact to EverOS")
     args = ap.parse_args()
+
+    if args.publish_policy:
+        publish_policy()
+        prov = fetch_policy_provenance()
+        print(f"round trip: {prov['version']} · {prov['author']} · "
+              f"{prov['basis']} (relevance {prov['score']:.2f})")
+        return
 
     if args.search:
         # Q&A armor: readable over a shoulder, graceful when offline.

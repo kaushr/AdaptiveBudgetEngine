@@ -23,6 +23,29 @@ import streamlit as st
 sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "scripts")))
 from run_arms import PROMPT_TEMPLATE  # noqa: E402
 
+# Local policy provenance — the guaranteed fallback. The demo NEVER depends
+# on a live third-party call: EverOS is tried once (short timeout) and any
+# failure falls back here silently.
+LOCAL_PROVENANCE = {"version": "v1", "author": "hand-authored",
+                    "basis": "expert judgment, not learned"}
+
+
+@st.cache_data(ttl=600)
+def _policy_provenance(mode):
+    """mode is part of the cache key so a forced-local run never reuses a
+    cached EverOS result (and vice versa)."""
+    if mode == "local":
+        return LOCAL_PROVENANCE, "local"
+    try:
+        from everos_log import fetch_policy_provenance
+        return fetch_policy_provenance(timeout=4), "everos"
+    except BaseException:  # noqa: BLE001 — any failure means local, silently
+        return LOCAL_PROVENANCE, "local"
+
+
+def policy_provenance():
+    return _policy_provenance(os.environ.get("DBE_POLICY_SOURCE", "everos"))
+
 
 def _source():
     if os.environ.get("DBE_SOURCE"):
@@ -391,6 +414,15 @@ with st.expander("The question"):
                "actually diverge.")
 
 with st.expander("The policy"):
+    prov, prov_src = policy_provenance()
+    st.markdown(
+        f"<span class='dbe-chip meta' style='font-weight:600'>"
+        f"{prov['version']} · {prov['author']} · {prov['basis']} — would be v2 "
+        f"when learned from labeled decisions</span>"
+        f"<span class='dbe-chip {'on' if prov_src == 'everos' else 'off'}'>"
+        f"policy record: "
+        f"{'EverOS memory' if prov_src == 'everos' else 'local definition (EverOS not consulted)'}"
+        f"</span>", unsafe_allow_html=True)
     st.code(
         f"if probability >= {threshold:.2f}:   # settled — certainty vetoes spend\n"
         f"    return CHEAP\n"
