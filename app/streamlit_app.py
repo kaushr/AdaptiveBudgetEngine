@@ -122,6 +122,18 @@ st.caption(f"Blocker agreement: {row.blocker_agreement_pct:.0f}%. "
            "A decision changed when the two arms reach different conclusions "
            "(verdict or primary blocker) — scored by exact match, no judge model.")
 
+# Call-flow arithmetic — makes the two-arm structure and call reuse legible
+# before "did you send all 30 to all 3 models?" gets asked. All values from
+# RUN_SUMMARY at the selected threshold.
+unique_calls = 30 + int(row.cheap_n) + int(row.balanced_n)
+st.markdown(
+    f"<div style='font-size:.95rem;color:{MUTED};padding:2px 0 6px 0'>"
+    f"30 records → <b>reference arm:</b> 30 premium calls → "
+    f"<b>adaptive arm:</b> {int(row.cheap_n)} cheap + {int(row.balanced_n)} balanced + "
+    f"{int(row.premium_n)} premium ({int(row.premium_n)} reuse the reference calls — counted once) → "
+    f"<b>{unique_calls} unique calls</b> behind this view → conclusions compared per record → "
+    f"<b>{int(row.decisions_changed)} changed</b></div>", unsafe_allow_html=True)
+
 # Frontier table — the visualization (three measured points + the endpoint)
 frontier = summary.copy()
 frontier["operating point"] = frontier.apply(
@@ -166,7 +178,10 @@ with beat1:
             f"<div class='dbe-card-value'>&#36;{row.waste_dollars:.4f} "
             f"on {int(row.waste_count)} records</div>"
             f"<div class='dbe-card-sub'>Records the policy routed cheap where the "
-            f"cheap tier reached identical conclusions to premium ({row.waste_records.replace(';', ', ')})</div>"
+            f"cheap tier reached identical conclusions to premium ({row.waste_records.replace(';', ', ')}). "
+            f"Of the {int(row.cheap_n)} records routed cheap at this threshold, these "
+            f"{int(row.waste_count)} reached identical conclusions (spend bought nothing); "
+            f"the remainder are counted in decisions changed.</div>"
             f"</div>", unsafe_allow_html=True)
 
 st.divider()
@@ -222,7 +237,22 @@ with st.expander("All 30 records"):
                     .rename(columns={"verdict": "adaptive_verdict", "primary_blocker": "adaptive_blocker"}), on="opp_id")
              .rename(columns={"changed_vs_reference": "changed"})
              .sort_values(["changed", "opp_id"], ascending=[False, True]))
-    st.dataframe(table, hide_index=True, width='stretch')
+
+    # Highlight the specific cells that differ — one neutral tint (the accent
+    # blue, deliberately not red: no editorializing about which arm is wrong).
+    TINT = "background-color: rgba(59, 130, 246, 0.22)"
+
+    def _diff_tint(r):
+        styles = pd.Series("", index=r.index)
+        if r["ref_verdict"] != r["adaptive_verdict"]:
+            styles[["ref_verdict", "adaptive_verdict"]] = TINT
+        if r["ref_blocker"] != r["adaptive_blocker"]:
+            styles[["ref_blocker", "adaptive_blocker"]] = TINT
+        return styles
+
+    st.dataframe(table.style.apply(_diff_tint, axis=1), hide_index=True, width='stretch')
+    st.caption("Tinted cells are the fields where the two arms' conclusions differ — "
+               "tier plus highlight answers which model disagreed, and on which field.")
 
 with st.expander("Usage detail"):
     # Token-economy accounting per model. MODEL_RUNS repeats shared calls

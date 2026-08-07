@@ -82,6 +82,10 @@ Three stages. Sweep the parameter grid offline against a labeled sample and let 
 
 Exactly. 61 unique model calls across all operating points: 30 premium (the reference arm; adaptive premium routes reuse them), 9 cheap and 20 balanced (the unions across the three thresholds — assignments nest as the threshold loosens), plus 2 extra cheap calls for the hero side-by-side view. The Usage expander shows the calls behind the selected view, deduplicated so a call shared by both arms is counted once. `MODEL_RUNS` intentionally has one row per record per arm (120) for per-arm accounting — physical spend is always aggregated over unique (record, tier) calls, reconcilable against `CORTEX_FUNCTIONS_USAGE_HISTORY`.
 
+### "Why is the waste card only 2 when 9 decisions changed?"
+
+They're disjoint by definition. Waste = records routed cheap where cheap reached **identical** conclusions to premium — the premium spend bought nothing. Changed = records where the conclusions **differ** — premium bought a different answer. A record is one or the other, never both. Waste is where routing cheap is airtight; changed-while-routed-cheap is the residual risk the conservative end of the frontier exists for.
+
 ### "Why only three models / three tiers?"
 
 A tier is a price-quality point on an ordered ladder, not a model family. Production ladders can mix different models, the same model at different reasoning-effort budgets (increasingly the natural knob — one model with adjustable reasoning gives a smooth ladder with consistent style), or different context strategies. The policy is agnostic to what populates the ladder — it only needs tiers ordered by cost. More tiers is more thresholds, same logic; three is a demo choice, not an architectural limit.
