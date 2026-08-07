@@ -35,9 +35,20 @@ Offline (the demo path — reads measured results, zero live calls):
 .venv/bin/streamlit run app/streamlit_app.py
 ```
 
-Live paths: `DBE_SOURCE=snowflake` points the same UI at `DECISION_BUDGET.DEMO`;
-`scripts/` rebuilds everything from scratch (see repo map) — a full re-run is
-61 short `AI_COMPLETE` calls, pennies of credit.
+Live mode — same UI, same code path, reading the five result tables from
+`DECISION_BUDGET.DEMO` instead of CSVs (still zero model calls; `AI_COMPLETE`
+exists only in `scripts/run_arms.py`):
+
+```bash
+.venv/bin/pip install snowflake-connector-python   # once, live mode only
+DBE_SOURCE=snowflake .venv/bin/streamlit run app/streamlit_app.py
+```
+
+Requires a `[connections.snowflake]` block in `.streamlit/secrets.toml`
+(gitignored — account, user, key-pair auth; mirror `~/.snowflake/config.toml`).
+The caption under the title shows which source is active. Rebuilding everything
+from scratch is `scripts/` in order (see repo map) — 61 short `AI_COMPLETE`
+calls, pennies of credit.
 
 ## Repo map
 

@@ -6,6 +6,12 @@
       "runtimeExecutable": ".venv/bin/streamlit",
       "runtimeArgs": ["run", "app/streamlit_app.py", "--server.headless", "true", "--server.port", "8601"],
       "port": 8601
+    },
+    {
+      "name": "dbe-demo-live",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["DBE_SOURCE=snowflake", ".venv/bin/streamlit", "run", "app/streamlit_app.py", "--server.headless", "true", "--server.port", "8602"],
+      "port": 8602
     }
   ]
 }

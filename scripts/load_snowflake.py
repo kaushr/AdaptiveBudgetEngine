@@ -40,6 +40,15 @@ CREATE OR REPLACE TABLE RUN_SUMMARY (
   waste_records STRING, waste_count NUMBER, waste_credits FLOAT, waste_dollars FLOAT,
   cost_vs_reference_pct FLOAT, projected_10k_weekly_dollars FLOAT
 );
+CREATE OR REPLACE TABLE HEROES (
+  opp_id STRING, kind STRING, name STRING, amount NUMBER, probability FLOAT,
+  complexity_score NUMBER,
+  cheap_verdict STRING, cheap_primary_blocker STRING,
+  cheap_next_best_action STRING, cheap_reasoning STRING,
+  premium_verdict STRING, premium_primary_blocker STRING,
+  premium_next_best_action STRING, premium_reasoning STRING,
+  routed_tier STRING, routed_reason STRING, routed_evidence STRING
+);
 """
 
 
@@ -79,10 +88,12 @@ def main():
     sql.append(inserts("MODEL_RUNS", "model_runs.csv"))
     sql.append(inserts("POLICY_DECISIONS", "policy_decisions.csv"))
     sql.append(inserts("RUN_SUMMARY", "run_summary.csv"))
+    sql.append(inserts("HEROES", "heroes.csv"))
     sql.append("SELECT 'OPPORTUNITIES' t, COUNT(*) n FROM OPPORTUNITIES UNION ALL "
                "SELECT 'MODEL_RUNS', COUNT(*) FROM MODEL_RUNS UNION ALL "
                "SELECT 'POLICY_DECISIONS', COUNT(*) FROM POLICY_DECISIONS UNION ALL "
-               "SELECT 'RUN_SUMMARY', COUNT(*) FROM RUN_SUMMARY;")
+               "SELECT 'RUN_SUMMARY', COUNT(*) FROM RUN_SUMMARY UNION ALL "
+               "SELECT 'HEROES', COUNT(*) FROM HEROES;")
 
     script = os.path.join(RESULTS_DIR, "load.sql")
     with open(script, "w") as fh:
