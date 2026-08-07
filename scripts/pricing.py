@@ -1,3 +1,7 @@
+# Decision Budget Engine — Intellinomics
+# Built at the Snowflake x Beta Fund AI Token Economics Hackathon, Aug 2026
+# MIT License — see LICENSE
+
 """Pricing constants — Snowflake Service Consumption Table, effective July 31, 2026.
 
 Rates are the AI_COMPLETE rows (AISQL), in AI Credits per one million tokens.

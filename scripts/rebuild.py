@@ -1,3 +1,7 @@
+# Decision Budget Engine — Intellinomics
+# Built at the Snowflake x Beta Fund AI Token Economics Hackathon, Aug 2026
+# MIT License — see LICENSE
+
 """Clean-slate rebuild: wipe → 61 calls → score → load → EverOS → verify → compare.
 
 Narrates every step by default — the prompts, raw responses, INSERTs, and acks

@@ -1,3 +1,7 @@
+# Decision Budget Engine — Intellinomics
+# Built at the Snowflake x Beta Fund AI Token Economics Hackathon, Aug 2026
+# MIT License — see LICENSE
+
 """Build results tables (T9/T10 scoring + T13 fallback) from the call cache.
 
 Outputs (data/results/):

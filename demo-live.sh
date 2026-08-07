@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Decision Budget Engine — Intellinomics
+# Built at the Snowflake x Beta Fund AI Token Economics Hackathon, Aug 2026
+# MIT License — see LICENSE
 # Demo, live mode: same UI reading the five result tables from
 # DECISION_BUDGET.DEMO. Still zero model calls — AI_COMPLETE exists only in
 # scripts/run_arms.py. Needs snowflake-connector-python in .venv and

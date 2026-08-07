@@ -1,3 +1,7 @@
+# Decision Budget Engine — Intellinomics
+# Built at the Snowflake x Beta Fund AI Token Economics Hackathon, Aug 2026
+# MIT License — see LICENSE
+
 """Dual-arm runner (workbook T7/T8): real AI_COMPLETE calls via `snow sql`.
 
 Call plan is deduplicated on (opp_id, tier): conclusions depend only on the

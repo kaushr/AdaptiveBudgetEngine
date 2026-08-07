@@ -1,3 +1,7 @@
+# Decision Budget Engine — Intellinomics
+# Built at the Snowflake x Beta Fund AI Token Economics Hackathon, Aug 2026
+# MIT License — see LICENSE
+
 """Adaptive Business Policy (workbook section 3) + dry-run harness (section 6).
 
 Pure arithmetic -- zero model calls. Run before any AI_COMPLETE spend to

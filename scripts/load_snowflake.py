@@ -1,3 +1,7 @@
+# Decision Budget Engine — Intellinomics
+# Built at the Snowflake x Beta Fund AI Token Economics Hackathon, Aug 2026
+# MIT License — see LICENSE
+
 """Load the four project tables into DECISION_BUDGET.DEMO (workbook T11).
 
 Generates one SQL script from the results CSVs and runs it via `snow sql -f`.

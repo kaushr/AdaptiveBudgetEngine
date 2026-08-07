@@ -1,3 +1,7 @@
+# Decision Budget Engine — Intellinomics
+# Built at the Snowflake x Beta Fund AI Token Economics Hackathon, Aug 2026
+# MIT License — see LICENSE
+
 """Hand-authored 30-opportunity dataset (workbook T1-T3).
 
 Every record is deliberate. Heroes are OPP-001 (settled), OPP-002 (complex),

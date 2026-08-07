@@ -1,3 +1,7 @@
+# Decision Budget Engine — Intellinomics
+# Built at the Snowflake x Beta Fund AI Token Economics Hackathon, Aug 2026
+# MIT License — see LICENSE
+
 """Tiny ANSI helpers for the rebuild narration. Plain escape codes, no
 dependencies; disabled automatically when stdout isn't a terminal (logs and
 pipes stay clean). FORCE_COLOR=1 overrides for testing."""

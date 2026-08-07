@@ -1,3 +1,7 @@
+# Decision Budget Engine — Intellinomics
+# Built at the Snowflake x Beta Fund AI Token Economics Hackathon, Aug 2026
+# MIT License — see LICENSE
+
 """Decision Budget Engine — single-screen demo (workbook T12/T18).
 
 Reads ONLY from the results tables. Offline fallback (default): the CSVs in

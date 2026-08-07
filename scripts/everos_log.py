@@ -1,3 +1,7 @@
+# Decision Budget Engine — Intellinomics
+# Built at the Snowflake x Beta Fund AI Token Economics Hackathon, Aug 2026
+# MIT License — see LICENSE
+
 """EverOS integration hook (event requirement): log routing decisions as memory.
 
 Additive, not load-bearing — reads the already-written results tables and
