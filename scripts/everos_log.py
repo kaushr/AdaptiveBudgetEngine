@@ -17,6 +17,7 @@ import csv
 import json
 import os
 import time
+import urllib.error
 import urllib.request
 
 RESULTS_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "results"))
@@ -61,13 +62,25 @@ def main():
     args = ap.parse_args()
 
     if args.search:
-        out = post("search", {"query": args.search, "user_id": USER_ID})
+        # Q&A armor: readable over a shoulder, graceful when offline.
+        try:
+            out = post("search", {"query": args.search, "user_id": USER_ID})
+        except (urllib.error.URLError, OSError, TimeoutError) as e:
+            raise SystemExit(
+                f"\nEverOS unreachable ({getattr(e, 'reason', e)}).\n"
+                "No network or the API is down — the decision log itself is fine; "
+                "retry when connectivity returns.")
         eps = out["data"]["episodes"]
-        print(f"{len(eps)} episodes for: {args.search!r}")
+        print(f"\nEverOS retrieval — {len(eps)} episode(s) for: {args.search!r}\n")
+        import textwrap
         for e in eps[:5]:
-            print(f"  [{e['score']:.2f}] {e['summary'][:160]}")
-            for f in e.get("atomic_facts", [])[:8]:
-                print(f"      - {f['content'][:200]}")
+            print(f"  relevance {e['score']:.2f}")
+            print(textwrap.fill(e["summary"], width=76,
+                                initial_indent="  ", subsequent_indent="  "))
+            for f in e.get("atomic_facts", [])[:6]:
+                print(textwrap.fill("• " + f["content"], width=76,
+                                    initial_indent="    ", subsequent_indent="      "))
+            print()
         return
 
     with open(os.path.join(RESULTS_DIR, "policy_decisions.csv")) as fh:

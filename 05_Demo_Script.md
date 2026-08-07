@@ -51,6 +51,16 @@ Screen state at start: slider at **0.98 · Conservative**, hero selector on
 
 *If anyone touches the 4-of-30, this is the best sixty seconds of the day: an unplanned finding that became evidence the veto works. Have it in your mouth, not just on this page.*
 
+**"Do you actually use EverOS?"** — show, don't describe. Run in a terminal:
+```bash
+python3 scripts/everos_log.py --search "OPP-008"
+```
+Live retrieval of that record's routing story with relevance scores. While it
+runs, the one-liner: *"Snowflake is where the decisions are made and audited;
+EverOS is where the system remembers them — and that memory is what turns
+today's hand-set thresholds into tomorrow's learned policy."* Full answer in
+the judge doc ("How do you actually use EverOS?").
+
 Everything else: `03_Judge_Questions.md`. Re-read it the morning of.
 
 ## Timing notes — calibrated to 135 wpm (presentation pace under pressure)

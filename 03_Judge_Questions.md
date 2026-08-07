@@ -82,6 +82,18 @@ Three stages. Sweep the parameter grid offline against a labeled sample and let 
 
 Exactly. 61 unique model calls across all operating points: 30 premium (the reference arm; adaptive premium routes reuse them), 9 cheap and 20 balanced (the unions across the three thresholds — assignments nest as the threshold loosens), plus 2 extra cheap calls for the hero side-by-side view. The Usage expander shows the calls behind the selected view, deduplicated so a call shared by both arms is counted once. `MODEL_RUNS` intentionally has one row per record per arm (120) for per-arm accounting — physical spend is always aggregated over unique (record, tier) calls, reconcilable against `CORTEX_FUNCTIONS_USAGE_HISTORY`.
 
+### "How do you actually use EverOS?"
+
+**The one-liner: "Snowflake is where the decisions are made and audited; EverOS is where the system remembers them — and that memory is what turns today's hand-set thresholds into tomorrow's learned policy."**
+
+The honest current state, stated first: every routing decision is logged as an episode — signals seen → tier chosen → whether the arms agreed. EverOS extracts and indexes them; retrieval works (verified at 0.85+ relevance on per-record queries, re-verified on each rebuild). Nothing in the routing path reads from it today — the policy doesn't query EverOS to make decisions.
+
+Why that's the right scope, not a gap: EverOS's Cases→Skills model is the substrate the three-stage lifecycle needs. Decisions accumulate now; outcome labels and expert judgments attach later; repeated patterns ("records with this signature keep favoring premium") distill into learned routing. The hand-set policy becomes a learned one by reading exactly the memory we're writing today. The missing ingredient is labels, not infrastructure.
+
+**If pushed:** "Today, write plus retrieval — the loop that reads it back into routing is stage three, and it needs outcome data we don't have. What we verified is that the memory layer extracts and retrieves our decisions." (Then show it: `python3 scripts/everos_log.py --search "OPP-008"` — live retrieval beats description.)
+
+**Paired: "What is Snowflake doing here?"** Business context lives in `OPPORTUNITIES` — the columns the policy routes on. Inference runs in-warehouse via `AI_COMPLETE`, next to that data. Every conclusion, token count, cost, and explanation writes back to `MODEL_RUNS` / `POLICY_DECISIONS` / `RUN_SUMMARY` — reconcilable against `CORTEX_FUNCTIONS_USAGE_HISTORY`, the same ledger Snowflake's own cost tooling reads.
+
 ### "Why is the waste card only 2 when 9 decisions changed?"
 
 They're disjoint by definition. Waste = records routed cheap where cheap reached **identical** conclusions to premium — the premium spend bought nothing. Changed = records where the conclusions **differ** — premium bought a different answer. A record is one or the other, never both. Waste is where routing cheap is airtight; changed-while-routed-cheap is the residual risk the conservative end of the frontier exists for.
