@@ -396,7 +396,6 @@ st.caption(COMPLEXITY_DEF + " Both answers below respond to the question shown i
            "'The question' expander at the bottom of the page.")
 
 colc, colp = st.columns(2)
-REASONING_CAP = 400  # ~4 lines at body size; overflow collapses, font never shrinks
 for col, tier_key, title in ((colc, "cheap", "cheap · llama3.1-8b"),
                              (colp, "premium", "premium · claude-sonnet-4-5")):
     with col:
@@ -418,15 +417,9 @@ for col, tier_key, title in ((colc, "cheap", "cheap · llama3.1-8b"),
         st.markdown("<div class='dbe-field' title='reasoning — the model&apos;s "
                     "justification, grounded in the record evidence. Shown to humans, "
                     "never auto-scored.'>reasoning</div>", unsafe_allow_html=True)
-        reasoning = h[f"{tier_key}_reasoning"]
-        if len(reasoning) > REASONING_CAP:
-            cut = reasoning[:REASONING_CAP].rsplit(" ", 1)[0]
-            st.caption(cut + " …")
-            with st.expander("more"):
-                # remainder only — never a second copy of the preview text
-                st.caption("… " + reasoning[len(cut):].strip())
-        else:
-            st.caption(reasoning)
+        # full text, no expander: a lone "more" on one card looked broken, and
+        # the longest reasoning is ~5 lines — cheap real estate
+        st.caption(h[f"{tier_key}_reasoning"])
 
 evidence = json.loads(h.routed_evidence)
 st.success(
