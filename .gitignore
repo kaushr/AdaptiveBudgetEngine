@@ -20,3 +20,6 @@ data/results/call_cache.json
 
 # Streamlit local secrets
 .streamlit/secrets.toml
+
+# Rebuild backup dir (restore path is git or this dir)
+data/results.pre-rebuild.bak/
