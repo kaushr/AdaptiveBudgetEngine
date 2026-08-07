@@ -86,6 +86,10 @@ st.markdown(f"""<style>
 .st-key-dbe_waste_card [data-testid="stMetricValue"] {{ color: #fff; }}
 .st-key-dbe_waste_card [data-testid="stCaptionContainer"] {{ color: rgba(255,255,255,.78); }}
 .dbe-action {{ font-size: 1.35rem; font-weight: 650; line-height: 1.35; min-height: 4.6em; }}
+/* Tiny field labels on the hero cards — subtle, uppercase, hover for detail */
+.dbe-field {{ font-size: .68rem; letter-spacing: .09em; text-transform: uppercase;
+              color: {MUTED}; opacity: .85; cursor: help; }}
+div.dbe-field {{ margin: 6px 0 1px 0; }}
 .dbe-chip {{ display: inline-block; padding: 2px 10px; border-radius: 12px;
              font-size: .8rem; margin: 2px 6px 2px 0; white-space: nowrap; }}
 .dbe-chip.on {{ background: rgba(59,130,246,.22); border: 1px solid rgba(59,130,246,.55); }}
@@ -397,11 +401,23 @@ for col, tier_key, title in ((colc, "cheap", "cheap · llama3.1-8b"),
                              (colp, "premium", "premium · claude-sonnet-4-5")):
     with col:
         st.markdown(f"##### {title}")
-        st.markdown(f"`{h[f'{tier_key}_verdict']}` · `{h[f'{tier_key}_primary_blocker']}`")
+        st.markdown(
+            f"<span class='dbe-field' title='verdict — can this forecast be trusted? "
+            f"One of ON_TRACK, AT_RISK, NO_ACTION_NEEDED.'>verdict</span> "
+            f"`{h[f'{tier_key}_verdict']}` &nbsp; "
+            f"<span class='dbe-field' title='primary blocker — the single biggest "
+            f"obstacle, from a fixed list of eight.'>blocker</span> "
+            f"`{h[f'{tier_key}_primary_blocker']}`", unsafe_allow_html=True)
         # fixed-size action block keeps the two arms' cards aligned regardless
         # of action length; same size both arms, always the second-largest text
+        st.markdown("<div class='dbe-field' title='next best action — the one thing "
+                    "the rep should do next, in the model&apos;s words.'>next best action</div>",
+                    unsafe_allow_html=True)
         st.markdown(f"<div class='dbe-action'>{html.escape(h[f'{tier_key}_next_best_action'])}</div>",
                     unsafe_allow_html=True)
+        st.markdown("<div class='dbe-field' title='reasoning — the model&apos;s "
+                    "justification, grounded in the record evidence. Shown to humans, "
+                    "never auto-scored.'>reasoning</div>", unsafe_allow_html=True)
         reasoning = h[f"{tier_key}_reasoning"]
         if len(reasoning) > REASONING_CAP:
             cut = reasoning[:REASONING_CAP].rsplit(" ", 1)[0]
