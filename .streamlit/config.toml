@@ -1,6 +1,9 @@
 # Neutral accent — the default red editorializes the savings end of the
 # slider as danger, which contradicts the frontier-is-tunable framing.
 [theme]
+# Dark theme for the demo — fixed, not viewer-dependent, so the projector
+# shows the same thing as rehearsal.
+base = "dark"
 primaryColor = "#3B82F6"
 # Projector-distance readability: raise the base size everything scales from.
 baseFontSize = 18
