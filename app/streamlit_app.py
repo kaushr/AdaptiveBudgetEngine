@@ -49,10 +49,14 @@ heroes = data["heroes"]
 
 ref = summary[summary.policy == "reference"].iloc[0]
 
+def fmt_amount(v):
+    return f"${v / 1e6:.1f}M" if v >= 1_000_000 else f"${v / 1e3:.0f}K"
+
+
 st.title("Decision Budget Engine")
 st.caption(
     "Workload-level model selection picks the best model for the task. "
-    "This decides how much reasoning each record within the task deserves. "
+    "Decision Budget Engine decides how much reasoning each record within it deserves. "
     f"Source: {'Snowflake' if _source() == 'snowflake' else 'results table (offline fallback)'} · "
     "30 opportunities · two arms, measured."
 )
@@ -106,7 +110,7 @@ pin_tiers = " → ".join(pin.tier.tolist())
 pin_now = pin[pin.threshold.astype(float) == threshold].iloc[0]
 opp8 = data["opportunities"].set_index("opp_id").loc["OPP-008"]
 st.info(
-    f"**OPP-008 — {opp8['name']}** · ${opp8.amount / 1e6:.1f}M · p=0.93 · complexity 4  \n"
+    f"**OPP-008 — {opp8['name']}** · {fmt_amount(opp8.amount)} · p=0.93 · complexity 4  \n"
     f"Across the three thresholds its tier goes **{pin_tiers}** — at {threshold:.2f} it gets "
     f"**{pin_now.tier}**. Probable and messy at the same time: certainty vetoes spend once "
     f"the bar loosens, no matter how complex the record looks. Deal size never enters the rule."
@@ -143,7 +147,7 @@ kind = st.radio("Hero record", ["settled", "contestable", "complex"],
                 horizontal=True, label_visibility="collapsed")
 h = heroes[heroes.kind == kind].iloc[0]
 
-st.markdown(f"**{h['opp_id']} — {h['name']}** · ${h.amount / 1e6:.2f}M · "
+st.markdown(f"**{h['opp_id']} — {h['name']}** · {fmt_amount(h.amount)} · "
             f"p={h.probability} · complexity {h.complexity_score}")
 colc, colp = st.columns(2)
 for col, tier_key, title in ((colc, "cheap", "cheap · llama3.1-8b"),
@@ -168,6 +172,7 @@ with st.expander("All 30 records"):
     dec = decisions[decisions.threshold.astype(float) == threshold]
     opps = data["opportunities"]
     table = (opps[["opp_id", "amount", "probability"]]
+             .assign(amount=lambda d: d.amount.map(fmt_amount))
              .merge(dec[["opp_id", "complexity_score", "tier", "changed_vs_reference",
                          "consequential"]], on="opp_id")
              .merge(reference[["opp_id", "verdict", "primary_blocker"]]

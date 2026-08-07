@@ -78,6 +78,10 @@ Right, but the customer should still see one control. They can't reason about tw
 
 Three stages. Sweep the parameter grid offline against a labeled sample and let the customer pick a point. Recalibrate periodically, because the frontier moves as data drifts. Then learn online from outcomes. Most of the value is in stage one — plenty of systems never need stage three.
 
+### "Do your call counts and costs reconcile?"
+
+Exactly. 61 unique model calls across all operating points: 30 premium (the reference arm; adaptive premium routes reuse them), 9 cheap and 20 balanced (the unions across the three thresholds — assignments nest as the threshold loosens), plus 2 extra cheap calls for the hero side-by-side view. The Usage expander shows the calls behind the selected view, deduplicated so a call shared by both arms is counted once. `MODEL_RUNS` intentionally has one row per record per arm (120) for per-arm accounting — physical spend is always aggregated over unique (record, tier) calls, reconcilable against `CORTEX_FUNCTIONS_USAGE_HISTORY`.
+
 ### "Why only three models / three tiers?"
 
 A tier is a price-quality point on an ordered ladder, not a model family. Production ladders can mix different models, the same model at different reasoning-effort budgets (increasingly the natural knob — one model with adjustable reasoning gives a smooth ladder with consistent style), or different context strategies. The policy is agnostic to what populates the ladder — it only needs tiers ordered by cost. More tiers is more thresholds, same logic; three is a demo choice, not an architectural limit.
