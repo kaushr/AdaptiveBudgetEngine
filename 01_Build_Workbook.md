@@ -148,7 +148,7 @@ return BALANCED
 
 **Frontier:** vary `high_confidence_threshold` **only** — 0.98 / 0.95 / 0.90, labelled Conservative / Balanced / Savings-Oriented. Hold `complexity_threshold` and every other rule constant. Two dials moving at once means you can't attribute the change to either.
 
-The Reference Policy is the same curve at threshold 1.00 — nothing is ever settled enough to spend less on. Present it as the endpoint, not a separate baseline.
+The Reference Policy is the same curve at threshold 1.00 — the certainty bar is unreachable, so no record ever clears it and every record gets premium. Present it as the endpoint, not a separate baseline. (Say it as a property of the bar, never of the deals: "no deal is ever certain *enough*," not "the deals are unsettled." And name the direction, since it trips intuition: higher number = stricter bar = *less* cheap routing.)
 
 Frontier table columns: policy · threshold · **% routed cheap** · total cost · decisions changed · verdict agreement. The % cheap column is free to compute and makes the mechanism visible — without it, falling cost looks like magic.
 

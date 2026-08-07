@@ -72,7 +72,8 @@ if __name__ == "__main__":
         label = f"{row['threshold']:.2f}" if row["threshold"] != 1.00 else "1.00*"
         print(f"{label:>10} {c[CHEAP]:>6} {c[BALANCED]:>9} {c[PREMIUM]:>8} "
               f"{100 * c[CHEAP] // 30:>7}%")
-    print("* Reference Policy endpoint (nothing ever settled enough to spend less on)")
+    print("* Reference Policy endpoint (the certainty bar at 1.00 is unreachable — "
+          "no record ever clears it, so every record gets premium)")
 
     # Collapse check (workbook section 6): distributions must be distinct
     signatures = [tuple(sorted(r["routing"].items())) for r in adaptive]

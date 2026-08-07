@@ -223,18 +223,28 @@ st.markdown(
 # Frontier table — the visualization (three measured points + the endpoint)
 frontier = summary.copy()
 frontier["operating point"] = frontier.apply(
-    lambda r: "Reference (1.00 — nothing is ever settled)" if r.policy == "reference"
+    lambda r: "Reference (1.00 — bar unreachable, all premium)" if r.policy == "reference"
     else f"{float(r.threshold):.2f}", axis=1)
 frontier_view = frontier[["operating point", "pct_cheap", "total_dollars",
                           "decisions_changed", "verdict_agreement_pct"]].rename(columns={
     "pct_cheap": "% routed cheap", "total_dollars": "total cost ($)",
     "decisions_changed": "decisions changed", "verdict_agreement_pct": "verdict agreement (%)"})
 frontier_view["total cost ($)"] = frontier_view["total cost ($)"].map(lambda v: f"{v:.4f}")
+# live direction examples for the certainty-bar tooltip (strictest vs loosest)
+_adaptive = summary[summary.policy == "adaptive"].copy()
+_adaptive["t"] = _adaptive.threshold.astype(float)
+_hi = _adaptive.loc[_adaptive.t.idxmax()]
+_lo = _adaptive.loc[_adaptive.t.idxmin()]
+_bar_examples = (f"{_hi.t:.2f} → {_hi.pct_cheap:.0f}% cheap; "
+                 f"{_lo.t:.2f} → {_lo.pct_cheap:.0f}% cheap")
 st.dataframe(frontier_view, hide_index=True, width='stretch', column_config={
     "operating point": st.column_config.Column(
-        help="The settledness bar: deals at or above this close probability are "
-             "routed cheap. Reference (1.00) means nothing is ever settled enough "
-             "to spend less on — every record gets the premium model."),
+        help="The certainty bar: a deal is only routed cheap if its close "
+             "probability clears this number. Higher bar = stricter = fewer deals "
+             "routed cheap "
+             f"({_bar_examples}). At 1.00 the bar is unreachable — no deal is ever "
+             "certain enough — so every record gets the premium model. That's the "
+             "reference policy."),
     "% routed cheap": st.column_config.Column(
         help="Share of the 30 records sent to the cheap model at that setting."),
     "total cost ($)": st.column_config.Column(
