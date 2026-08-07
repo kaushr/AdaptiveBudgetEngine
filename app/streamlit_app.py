@@ -126,11 +126,12 @@ div.dbe-field {{ margin: 6px 0 1px 0; }}
 .st-key-dbe_tile_cost, .st-key-dbe_tile_verdict, .st-key-dbe_tile_cheap {{
     background: rgba(154,164,178,.08); border: 1px solid rgba(154,164,178,.20);
     border-radius: 8px; padding: 12px 14px; }}
-/* The key-message banner: the 10k/week projection */
-.st-key-dbe_projection {{ background: rgba(59,130,246,.12);
-    border: 1px solid rgba(59,130,246,.45); border-radius: 8px;
+/* The key-message banner: the 10k/week projection — green, it's the savings */
+.st-key-dbe_projection {{ background: rgba(34,197,94,.12);
+    border: 1px solid rgba(34,197,94,.45); border-radius: 8px;
     padding: 10px 18px 2px 18px; margin-top: 10px; }}
 .dbe-proj-val {{ font-size: 1.5rem; font-weight: 700; }}
+.dbe-proj-save {{ font-size: 1.5rem; font-weight: 700; color: #4ade80; }}
 /* Slider: taller, bigger thumb label; built-in tick bar replaced by a
    full stops row below (it only ever showed the endpoints) */
 [data-testid="stSliderTickBar"] {{ display: none; }}
@@ -379,9 +380,12 @@ with beat1:
 
     # The key message, full width and unmissable: what this costs at scale
     with st.container(key="dbe_projection"):
+        _saved = ref.projected_10k_weekly_dollars - row.projected_10k_weekly_dollars
         st.markdown(f"<span class='dbe-proj-val'>At 10,000 records/week: "
                     f"{md_usd(ref.projected_10k_weekly_dollars, 2)} → "
-                    f"{md_usd(row.projected_10k_weekly_dollars, 2)}</span>",
+                    f"{md_usd(row.projected_10k_weekly_dollars, 2)}.</span> "
+                    f"<span class='dbe-proj-save'>Adaptive policy will save "
+                    f"{md_usd(_saved, 2)} a week.</span>",
                     unsafe_allow_html=True)
         st.caption("Linear projection: measured per-record cost × 10,000 — projected, not measured.")
 
