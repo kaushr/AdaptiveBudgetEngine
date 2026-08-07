@@ -10,7 +10,7 @@ Read the morning of. Answer in two or three sentences and stop talking. Over-exp
 
 ## The elevator framing (for non-technical judges)
 
-A manager with 30 deals hires an expensive consultant to review every one, every week. On most deals the consultant looks for two minutes and says what the junior analyst would have said for free. On a few messy ones, the consultant genuinely earns the fee. The waste isn't hiring the consultant — it's hiring the consultant for deals where a glance was enough. This product is the rule that decides, per deal, who reviews it — using information the manager already has (how settled is it? how many unresolved problems?), never the deal's size.
+A manager with 30 deals hires an expensive consultant to review these every week. On most deals the consultant looks for two minutes and says what the junior analyst would have said for free. On a few messy ones, the consultant genuinely earns the fee. The waste isn't hiring the consultant — it's hiring the consultant for deals where a glance was enough. That's Intellinomics. Our Decision Budget Engine is exactly that. Our product is the layer that varies treatment per record.
 
 **The two-line differentiation:** Snowflake's new cost stack (spend aggregation, per-user limits, runaway-query cancellation, workload model selection) governs accounts, users, and queries — it never looks inside a query at row 7 vs row 8. Token/model efficiency makes every call cheaper or picks a better default; both still treat every record identically. We're the layer that varies treatment per record — stacks on top of both, competes with neither.
 
