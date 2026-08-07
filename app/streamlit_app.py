@@ -13,9 +13,15 @@ HEROES. Nothing is computed from model output here, nothing is invented.
 import html
 import json
 import os
+import sys
 
 import pandas as pd
 import streamlit as st
+
+# The runner's actual prompt template — imported, not copied, so the screen
+# cannot drift from what was really sent.
+sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "scripts")))
+from run_arms import PROMPT_TEMPLATE  # noqa: E402
 
 
 def _source():
@@ -247,7 +253,8 @@ chips += (f"<span class='dbe-chip meta'>stage: {opp_full.stage}</span>"
           f"<span class='dbe-chip meta'>strategic: {'yes' if _b(opp_full.strategic_account) else 'no'}</span>"
           f"<span class='dbe-chip meta'>{opp_full.days_since_activity} days since activity</span>")
 st.markdown(f"<div>{chips}</div>", unsafe_allow_html=True)
-st.caption(COMPLEXITY_DEF)
+st.caption(COMPLEXITY_DEF + " Both answers below respond to the question shown in "
+           "'The question' expander at the bottom of the page.")
 
 colc, colp = st.columns(2)
 REASONING_CAP = 400  # ~4 lines at body size; overflow collapses, font never shrinks
@@ -367,6 +374,21 @@ with st.expander("Usage detail"):
                "selected threshold — a record premium in both arms is one call, counted once. "
                "Raw measured values from MODEL_RUNS; reconcilable against Snowflake's "
                "CORTEX_FUNCTIONS_USAGE_HISTORY (same ledger).")
+
+with st.expander("The question"):
+    st.code(PROMPT_TEMPLATE.format(
+        record_block="<this record's CRM context — id, amount, probability, stage,\n"
+                     " strategic flag, days since activity, close date, active risk\n"
+                     " flags, and the rep's notes — injected here>"),
+        language=None)
+    st.caption("This identical prompt goes to every model — cheap, balanced, premium — "
+               "with only the record's CRM context injected. Same question, same rules, "
+               "same output contract; only the model changes. That's what makes the two "
+               "arms' conclusions comparable. The numbered procedure pins the verdict "
+               "boundaries so the arms can't disagree by vocabulary; the model's judgment "
+               "lives in assessing whether risks require intervention, choosing the "
+               "primary blocker, and the next action — the fields where the tiers "
+               "actually diverge.")
 
 with st.expander("The policy"):
     st.code(

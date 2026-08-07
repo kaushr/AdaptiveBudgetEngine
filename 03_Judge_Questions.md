@@ -118,6 +118,10 @@ Concede the composition openly: 4 changed at Conservative, of which 2 are disagr
 
 Then the pivot — note the **direction** of the logic: those records were routed cheap precisely because nothing can change what happens to them. A cheap-model error there is a disagreement with no blast radius. The certainty veto doesn't just save money on settled records; it routes cheap exactly where being wrong is safest — and the consequential column demonstrates that with data. Concession first, then this: it turns the composition of the 4 from a weakness admitted into a design property proven, found in the measured run rather than designed in.
 
+### "Isn't the prompt just telling the model the answer?"
+
+It pins vocabulary, not substance. The numbered procedure fixes what the verdict *words* mean — where "settled" ends and "at risk" begins — so the arms can't disagree by using the same word differently. The judgment the model still owns is the substance: does this record's evidence require intervention now, which of eight blockers is primary, and what's the next action — exactly the fields where the tiers diverge (the contestable hero splits CHAMPION_LOSS vs ECONOMIC_BUYER under this same prompt). The full prompt is on screen in "The question" expander; a contract that decided the answers would produce 100% agreement, and we measure 90.
+
 ### "What did you learn building this?"
 
 Small models need contracts written as procedures, not descriptions — llama ignored adjective-based verdict rules until we restructured them as a numbered decision procedure, applied identically to both arms so the measurement stayed valid. The interesting engineering in per-record routing is the task contract, not the routing.

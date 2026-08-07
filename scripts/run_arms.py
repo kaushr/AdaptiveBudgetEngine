@@ -36,9 +36,10 @@ BLOCKERS = {"ECONOMIC_BUYER", "SECURITY_LEGAL", "PROCUREMENT", "COMPETITION",
             "PRICING", "CHAMPION_LOSS", "INACTIVITY", "NONE"}
 
 
-def build_prompt(r):
-    active = [f for f in FLAGS if r[f]] or ["none"]
-    return f"""You are a sales operations analyst reviewing one CRM opportunity. Answer the manager's question: can I trust this forecast, what is the biggest risk, and what should be done next?
+# Single source of truth for the task contract — the UI's "The question"
+# expander imports THIS string, so what's on screen cannot drift from what
+# the runner actually sends. {record_block} is the only injected part.
+PROMPT_TEMPLATE = """You are a sales operations analyst reviewing one CRM opportunity. Answer the manager's question: can I trust this forecast, what is the biggest risk, and what should be done next?
 
 Respond with ONLY a JSON object — no markdown, no code fences, no text before or after — with exactly these fields:
 {{"verdict": "...", "primary_blocker": "...", "next_best_action": "...", "reasoning": "..."}}
@@ -57,11 +58,20 @@ Field rules:
 - Do not output probabilities or confidence scores anywhere.
 
 Opportunity record:
-- id: {r['opp_id']}  name: {r['name']}
+{record_block}"""
+
+
+def record_block(r):
+    active = [f for f in FLAGS if r[f]] or ["none"]
+    return f"""- id: {r['opp_id']}  name: {r['name']}
 - amount_usd: {r['amount']}  crm_close_probability: {r['probability']}  stage: {r['stage']}
 - strategic_account: {r['strategic_account']}  days_since_activity: {r['days_since_activity']}  close_date: {r['close_date']}
 - active_risk_flags: {', '.join(active)}
 - notes: {r['notes']}"""
+
+
+def build_prompt(r):
+    return PROMPT_TEMPLATE.format(record_block=record_block(r))
 
 
 def snow_ai_complete(model, prompt):
