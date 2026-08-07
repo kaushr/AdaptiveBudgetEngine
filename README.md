@@ -11,6 +11,18 @@ Snowflake × Beta Fund × Evermind hackathon — Track 1, Cost of Intelligence.
 reads the measured results committed in this repo; no warehouse connection,
 exactly as labeled on the page.
 
+![The bill: reference policy vs premium spend on decisions that were already made](docs/img/01-the-bill.png)
+*The bill. Reference policy sends all 30 records to the premium model; the amber card is premium spend that bought nothing — and the green banner is the projected weekly savings.*
+
+![The dial: three measured operating points with the frontier table](docs/img/02-the-dial.png)
+*One control. Each operating point is measured — cost, decisions changed, agreement — and OPP-008 shows the certainty veto overriding complexity as the bar loosens.*
+
+![Two answers to the same question, diverging on the blocker](docs/img/03-two-answers.png)
+*Where reasoning still pays. Same record, same prompt: the cheap tier grabs the loudest flag (CHAMPION_LOSS); premium finds the root cause (ECONOMIC_BUYER).*
+
+![The drill-down with differing conclusions highlighted](docs/img/04-drilldown.png)
+*Every record, both arms, differences highlighted — sorted changed-first, with the consequential column separating live disagreements from dead-deal noise.*
+
 ## The measured result
 
 Two arms over the same 30 sales opportunities: **reference** (every record →
@@ -86,3 +98,10 @@ EverOS — the memory/learning layer — and retrievable by search
 (`MODEL_RUNS`, `RUN_SUMMARY`), reconcilable against
 `CORTEX_FUNCTIONS_USAGE_HISTORY`: Snowflake analyzing the token economy behind
 the product.
+
+## Team & event
+
+**Intellinomics** — Kaushik Ruparel, Payal. Built at the Snowflake × Beta Fund
+AI Token Economics Hackathon, Snowflake HQ, Aug 7 2026 (Track 1 — Cost of
+Intelligence). Hosted demo: https://intellinomics.streamlit.app · MIT License
+— see [LICENSE](LICENSE).

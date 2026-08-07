@@ -75,6 +75,16 @@ the judge doc ("How do you actually use EverOS?").
 two-liner lives in the judge doc's elevator section; don't spend it in the
 pitch.
 
+**Quick-reference one-liners** (KAUSHIK — full versions in the judge doc):
+- *Call counts:* "61 unique calls across all operating points — 30 premium, 9 cheap, 20 balanced across the threshold unions, plus 2 hero side-by-sides; the Usage expander shows the calls behind the current view, shared calls counted once."
+- *Naive-SUM trap:* "`MODEL_RUNS` has one row per record per arm for per-arm accounting — a raw SUM double-counts shared calls; physical spend always aggregates unique (record, tier) calls."
+- *Prompt contract:* "It pins vocabulary, not substance — a contract that decided the answers would produce 100% agreement, and we measure 90. The full prompt is on screen in 'The question.'"
+
+**The account-lock story** (either presenter, if the day comes up):
+> Our trial account got auto-flagged for abuse mid-hackathon — very on-theme
+> for a project about AI spend — Snowflake reviewed and unlocked it before
+> demos.
+
 Everything else: `03_Judge_Questions.md`. Re-read it the morning of.
 
 ## Timing — calibrated to 135 wpm (presentation pace under pressure)
