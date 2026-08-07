@@ -1,5 +1,25 @@
 # Friday — before 11:00
 
+## Submission (deadline 4:00 PM HARD — start at 3:30 regardless of state)
+
+The event page specifies the 4:00 PM deadline and 1–2 builders per team but
+**no submission format** — confirm the mechanism (form? Luma? on-site?) at
+morning check-in or in Discord, first thing.
+
+Pre-staged tonight:
+- [ ] **Repo**: add the remote and push (`git remote add origin <url> && git push -u origin main --tags`). README is the judge-facing front page.
+- [ ] **Write-up**: README.md doubles as it (pitch, measured frontier table, how to run, requirement compliance). If a separate form field wants prose, paste README's first two sections.
+- [ ] **Video**: not known to be required — stretch only, never before rehearsal.
+- **3:30 trigger**: whatever state the build is in, start submitting. The
+  workbook's hard-stop philosophy, applied to the deadline.
+
+**Rollback point**: tag `pre-hackathon-stable` = tonight's tested state
+(offline demo verified in a fresh venv). If the morning re-run or any edit
+breaks something: `git reset --hard pre-hackathon-stable` and demo the
+offline path.
+
+---
+
 Everything below is verification, not building. If any check fails, the fix is
 the first build-block task.
 

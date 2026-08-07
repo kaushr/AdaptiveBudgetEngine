@@ -14,3 +14,9 @@ venv/
 
 # OS
 .DS_Store
+
+# Intermediate call cache (results CSVs are the shipped fallback)
+data/results/call_cache.json
+
+# Streamlit local secrets
+.streamlit/secrets.toml

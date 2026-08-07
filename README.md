@@ -1,42 +1,69 @@
 # Decision Budget Engine
 
-Workload-level model selection picks the best model for a task. This decides how
-much reasoning each individual record within that task deserves. Snowflake ×
-Beta Fund × Evermind hackathon — Track 1, Cost of Intelligence.
+Workload-level model selection picks the best model for a task. Decision Budget
+Engine decides how much reasoning each individual record within that task
+deserves — routed on business signals (close probability, decision complexity),
+never deal size.
 
-Docs: [00_Setup.md](00_Setup.md) (environment) · [01_Build_Workbook.md](01_Build_Workbook.md)
-(build plan) · [02_Product_Brief.md](02_Product_Brief.md) (product) ·
-[03_Judge_Questions.md](03_Judge_Questions.md) (framing).
+Snowflake × Beta Fund × Evermind hackathon — Track 1, Cost of Intelligence.
 
-## Run the demo (offline — zero live calls)
+## The measured result
+
+Two arms over the same 30 sales opportunities: **reference** (every record →
+premium model) vs **adaptive** (tier per record). A decision **changed** when
+verdict or primary blocker differs between arms — exact match on fixed enums,
+no judge model. 61 unique model calls; every number below is from the run.
+
+| operating point | % routed cheap | total cost ($) | vs reference | decisions changed | verdict agreement |
+|---|---|---|---|---|---|
+| 0.98 · Conservative | 13% | 0.1145 | 53% | **4 of 30** | 90% |
+| 0.95 · Balanced | 20% | 0.1088 | 51% | 6 of 30 | 83% |
+| 0.90 · Savings-oriented | 30% | 0.0961 | 45% | 9 of 30 | 77% |
+| Reference (1.00) | 0% | 0.2149 | 100% | — | — |
+
+One threshold varies; all other policy logic held constant. The output is a
+frontier an enterprise tunes to its risk tolerance — not a single correct
+policy. We say *changed*, never *improved*: changed is measured.
+
+## Run it
+
+Offline (the demo path — reads measured results, zero live calls):
 
 ```bash
-/opt/homebrew/bin/python3.11 -m venv .venv        # once
-.venv/bin/pip install streamlit pandas             # once
+/opt/homebrew/bin/python3.11 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 .venv/bin/streamlit run app/streamlit_app.py
 ```
 
-Reads the measured results from `data/results/*.csv` (the fallback tables).
-Set `DBE_SOURCE=snowflake` to read the same tables from `DECISION_BUDGET.DEMO`.
+Live paths: `DBE_SOURCE=snowflake` points the same UI at `DECISION_BUDGET.DEMO`;
+`scripts/` rebuilds everything from scratch (see repo map) — a full re-run is
+61 short `AI_COMPLETE` calls, pennies of credit.
 
-## Rebuild the results (spends pennies of Cortex credit)
+## Repo map
 
-```bash
-cd scripts
-python3 dataset.py            # regenerate data/opportunities.csv (30 records)
-python3 policy.py             # dry-run: routing distributions, no model calls
-python3 run_arms.py --heroes  # the three heroes first (workbook rule)
-python3 run_arms.py           # full dual-arm plan (cached, resumable)
-python3 summarize.py          # score arms, write data/results/*.csv
-python3 load_snowflake.py     # load the four tables into DECISION_BUDGET.DEMO
-```
+| Path | What |
+|---|---|
+| `data/` | 30-record source dataset + schema; `data/results/` is the measured output and the offline fallback |
+| `scripts/` | `dataset.py` → `policy.py` (dry-run) → `run_arms.py` (dual-arm calls) → `summarize.py` (scoring) → `load_snowflake.py` → `everos_log.py` (EverOS decision log) |
+| `app/` | single-screen Streamlit demo |
+| `00–05_*.md` | docs: [setup](00_Setup.md) · [build workbook](01_Build_Workbook.md) · [product brief](02_Product_Brief.md) · [judge prep](03_Judge_Questions.md) · [vocabulary](04_Terms_Vocabulary.md) · [demo script](05_Demo_Script.md) |
 
-Calls are cached in `data/results/call_cache.json` — re-runs never re-spend.
+## Tiers
 
-## Measurement
+| Tier | Cortex model | AI credits per 1M tokens (in / out) |
+|---|---|---|
+| cheap | `llama3.1-8b` | 0.132 / 0.132 |
+| balanced | `mistral-large2` | 1.20 / 3.60 |
+| premium | `claude-sonnet-4-5` | 1.80 / 9.00 |
 
-Two arms over the same 30 records: reference (all premium) vs adaptive
-(cheap / balanced / premium per record, from business signals only — never deal
-size). A decision **changed** when verdict or primary blocker differs between
-arms — exact match on fixed enums, no judge model. We say *changed*, never
-*improved*: changed is measured.
+A tier is a price-quality point on an ordered ladder, not a model family —
+three tiers is a demo choice, not an architectural limit.
+
+## Event requirement (EverMind)
+
+Every routing decision (signals in, tier out, agreement result) is logged to
+EverOS — the memory/learning layer — and retrievable by search
+(`scripts/everos_log.py`). Token and cost accounting lives in Snowflake
+(`MODEL_RUNS`, `RUN_SUMMARY`), reconcilable against
+`CORTEX_FUNCTIONS_USAGE_HISTORY`: Snowflake analyzing the token economy behind
+the product.

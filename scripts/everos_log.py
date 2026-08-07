@@ -46,12 +46,12 @@ def post(endpoint, payload):
 
 def decision_message(d, run_row):
     changed = d["changed_vs_reference"] == "True"
-    outcome_txt = ("its conclusions DIFFERED from the reference arm"
-                   if changed else "its conclusions matched the reference arm")
+    agreement_txt = ("its conclusions DIFFERED from the reference arm"
+                     if changed else "its conclusions matched the reference arm")
     return (f"Routing decision for {d['opp_id']}: signals were close probability "
             f"{d['probability']}, decision complexity score {d['complexity_score']}, "
             f"strategic account {d['strategic_account']}. The policy selected the "
-            f"{d['tier']} tier because: {d['reason']}. When evaluated, {outcome_txt} "
+            f"{d['tier']} tier because: {d['reason']}. When evaluated, {agreement_txt} "
             f"(verdict {run_row['verdict']}, primary blocker {run_row['primary_blocker']}).")
 
 
