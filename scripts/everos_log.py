@@ -23,7 +23,7 @@ RESULTS_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "da
 ENV_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "local", "evermind.env"))
 BASE = "https://api.evermind.ai/api/v2/memory"
 USER_ID = "decision-budget-engine"
-SESSION_ID = "dbe-run-2026-08-06-t098"
+SESSION_ID = "dbe-run-" + time.strftime("%Y-%m-%d") + "-t098"  # fresh session per day
 THRESHOLD = 0.98
 
 

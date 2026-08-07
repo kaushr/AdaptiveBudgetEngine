@@ -26,18 +26,18 @@ the first build-block task.
 0. **Re-run the full pipeline during build hours** — refreshes every timestamp
    in Snowflake and EverOS, so "we ran this today, here's the query history" is
    the answer instead of explaining Thursday timestamps. Doubles as the live-path
-   smoke test on venue WiFi. Tonight's results stay committed as the tested
-   offline fallback; Friday's run becomes the live data. **Cost ~$0.30 of trial
-   credit, ~10 minutes total** — no-hesitation decision:
+   smoke test on venue WiFi. **Cost ~$0.30 of trial credit, ~10-12 minutes** —
+   no-hesitation decision:
    ```bash
-   cd scripts
-   rm ../data/results/call_cache.json   # force fresh calls (cache would no-op)
-   python3 run_arms.py --heroes         # sanity: heroes land as authored (~1 min)
-   python3 run_arms.py                  # remaining calls (~6 min)
-   python3 summarize.py && python3 load_snowflake.py && python3 everos_log.py
+   ./rebuild.sh
    ```
-   If venue WiFi fights: stop, keep the offline fallback, move on — it's the
-   tested path and the demo needs nothing live.
+   One command: wipes the five tables + result CSVs (backing them up to
+   `data/results.pre-rebuild.bak/` first; git also has them), re-runs the 61
+   calls with full narration, rescores, reloads Snowflake, re-logs EverOS, and
+   diffs the new numbers against the committed run — flagging any drift the
+   demo script would need to absorb. Add `--quiet` for a terse rerun.
+   If venue WiFi fights: `git checkout -- data/results/` restores the offline
+   fallback, and the demo needs nothing live.
 1. **Rehearse 3× under 2:45** ([05_Demo_Script.md](05_Demo_Script.md)) — the only
    open workbook exit item. Full script is 2:43 at 135 wpm (zero slack); rehearse
    the compressed version (2:23) at least once. Time every run.

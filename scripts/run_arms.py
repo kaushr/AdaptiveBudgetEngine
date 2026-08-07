@@ -117,26 +117,56 @@ def save_cache(cache):
         json.dump(cache, fh, indent=1)
 
 
-def run_call(record, tier, cache):
-    """Execute (or fetch cached) one (opp, tier) call. Returns result dict."""
+def _print_prompt(prompt, full):
+    lines = prompt.splitlines()
+    shown = lines if full else lines[:10]
+    for ln in shown:
+        print(f"    | {ln}")
+    if not full and len(lines) > len(shown):
+        print(f"    | … ({len(lines) - len(shown)} more lines — use --full-prompts)")
+
+
+def run_call(record, tier, cache, verbose=False, full_prompts=False, header=""):
+    """Execute (or fetch cached) one (opp, tier) call. Returns result dict.
+
+    verbose narrates the actual work: the prompt sent, the raw JSON returned,
+    validation outcome, tokens/cost/latency. Nothing shown is simulated.
+    """
     key = f"{record['opp_id']}|{tier}"
     if key in cache and not cache[key].get("error"):
+        if verbose:
+            c = cache[key]
+            print(f"{header} {record['opp_id']} · tier={tier} · {c['model']} — cached ✓ "
+                  f"({c['verdict']} / {c['primary_blocker']})")
         return cache[key]
     model = TIER_MODEL[tier]
     prompt = build_prompt(record)
     result = {"opp_id": record["opp_id"], "tier": tier, "model": model}
+    if verbose:
+        print(f"{header} {record['opp_id']} · tier={tier} · {model}")
+        print("  prompt →")
+        _print_prompt(prompt, full_prompts)
     attempts, last_err = 0, None
     while attempts < 2:
         attempts += 1
         try:
             detail, wall_ms = snow_ai_complete(model, prompt)
             usage = detail.get("usage", {})
+            if verbose:
+                print("  raw response ←")
+                for ln in json.dumps(detail, indent=2).splitlines():
+                    print(f"    | {ln}")
             obj = parse_output(detail)
+            credits = call_credits(model, usage.get("prompt_tokens", 0),
+                                   usage.get("completion_tokens", 0))
+            if verbose:
+                print(f"  ✓ valid (attempt {attempts}) · in={usage.get('prompt_tokens', 0)} "
+                      f"out={usage.get('completion_tokens', 0)} · ${credits * 3:.4f} "
+                      f"({credits:.6f} cr) · {wall_ms / 1000:.1f}s")
             result.update(
                 input_tokens=usage.get("prompt_tokens", 0),
                 output_tokens=usage.get("completion_tokens", 0),
-                credits=call_credits(model, usage.get("prompt_tokens", 0),
-                                     usage.get("completion_tokens", 0)),
+                credits=credits,
                 latency_ms=wall_ms, attempts=attempts, error=None, **obj,
             )
             cache[key] = result
@@ -144,8 +174,12 @@ def run_call(record, tier, cache):
             return result
         except (ValueError, RuntimeError, KeyError, json.JSONDecodeError) as e:
             last_err = str(e)[:300]
+            if verbose:
+                print(f"  ✗ retry {attempts}: {last_err}")
             prompt_retry = prompt + "\n\nIMPORTANT: your previous response was invalid (" + last_err + "). Output ONLY the JSON object with the exact enum values listed."
             prompt = prompt_retry
+    if verbose:
+        print(f"  ✗ ERROR RECORD after {attempts} attempts: {last_err}")
     result.update(input_tokens=0, output_tokens=0, credits=0.0, latency_ms=0,
                   attempts=attempts, error=last_err,
                   verdict=None, primary_blocker=None,
@@ -171,6 +205,10 @@ def call_plan():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--heroes", action="store_true", help="run only the three heroes")
+    ap.add_argument("--verbose", action="store_true",
+                    help="narrate every call: prompt, raw JSON, validation, cost")
+    ap.add_argument("--full-prompts", action="store_true",
+                    help="with --verbose: print prompts untruncated")
     args = ap.parse_args()
 
     cache = load_cache()
@@ -182,11 +220,19 @@ def main():
                or cache[f"{k[0]}|{k[1]}"].get("error")]
     print(f"plan: {len(todo)} calls ({len(todo) - len(pending)} cached, {len(pending)} to run)")
 
+    spend = 0.0
     for i, (oid, tier) in enumerate(todo):
-        res = run_call(records[oid], tier, cache)
-        status = f"ERROR: {res['error']}" if res["error"] else \
-            f"{res['verdict']} / {res['primary_blocker']} ({res['input_tokens']}+{res['output_tokens']} tok, {res['latency_ms']}ms)"
-        print(f"[{i+1}/{len(todo)}] {oid} {tier:<9} {status}")
+        header = f"[call {i+1}/{len(todo)}]"
+        res = run_call(records[oid], tier, cache, verbose=args.verbose,
+                       full_prompts=args.full_prompts, header=header)
+        spend += res["credits"]
+        if args.verbose:
+            print(f"  running total: {i+1}/{len(todo)} calls · spend so far: "
+                  f"${spend * 3:.4f} ({spend:.6f} cr)\n")
+        else:
+            status = f"ERROR: {res['error']}" if res["error"] else \
+                f"{res['verdict']} / {res['primary_blocker']} ({res['input_tokens']}+{res['output_tokens']} tok, {res['latency_ms']}ms)"
+            print(f"{header} {oid} {tier:<9} {status}")
 
     if args.heroes:
         print("\n--- Hero comparison (cheap vs premium) ---")
