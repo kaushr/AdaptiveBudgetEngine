@@ -11,7 +11,7 @@ Last updated: Aug 6, 2026 (Kaushik's machine, verified working end to end — Sn
 **Snowflake × Beta Fund × Evermind Agent & Token Economy Hackathon** — Menlo Park, CA. Teams of 1–2.
 
 - **Track we're entering: Track 1 — "Cost of Intelligence" (cheaper AI execution)** — direct fit for Decision Budget Engine. (Other tracks: Value of Intelligence, Wildcard.)
-- **Requirement: every team must build with EverMind infrastructure** — EverOS for memory, personalization, context, or learning layers, while leveraging Snowflake. See §12 for our verified EverOS setup.
+- **Requirement: every team must build with EverMind infrastructure** — *"using EverOS for memory, personalization, context, or learning layers, while leveraging Snowflake."* This was missed in initial planning and only caught when we read the event page directly. **Treat the event page as the source of truth — re-read it end to end before Friday; don't rely on secondhand summaries.** See §12 for our verified EverOS setup.
 - **Schedule:** 9:00 check-in → 10:00–11:00 workshops → 11:00–4:00 build (lunch at 12) → 4:00–5:00 demos (**3-minute limit**) → 5:00 voting/awards. The workbook timeline (11:00 start, 2:30 hard stop, 2:45 demo target) maps onto this.
 - **Prizes:** $600 / $500 / $400 + $200 standout (with UpScaleX 1:1).
 - **Partner credits:** Snowflake (Cortex access + credits), EverMind (EverOS credits + engineering support).
@@ -313,7 +313,10 @@ If it routes through the plugin → `cortex` CLI → your connection and returns
 - [ ] Function Studio availability — ask in event Discord
 - [ ] Repo scaffold + fallback table mechanism
 - [ ] UI framework decision (Streamlit assumed, not yet confirmed)
-- [ ] **EverOS integration design** — where EverOS fits in the architecture (event requires it, see §12). Leading candidate: memory/learning layer over routing decisions — matches the "policy learned from outcomes" production story in the judge prep.
+- [ ] **EverOS integration depth** — confirm how "deep" the integration needs to be to satisfy the requirement (logging Cases may be enough — or judges may expect visible Skills/learning behavior in the demo). Ask in event Discord, alongside the Function Studio question; EverMind is offering engineering support, so there may be a sanctioned low-lift path.
+- [ ] **Test the EverOS Claude Code plugin** as a fast integration path (see §12).
+
+*(Resolved: Cloud vs local runtime — Cloud, tested end to end Aug 6. Integration point — `POLICY_DECISIONS` → Cases, additive not load-bearing. See §12.)*
 
 ---
 
@@ -323,7 +326,18 @@ The event **requires** every team to build with EverMind's EverOS (memory / pers
 
 ### What it is
 
-EverOS is an agent memory layer: you feed it conversation messages (or documents), it asynchronously extracts structured "episodes" and atomic facts, and you retrieve them via semantic search. Cloud API at `https://api.evermind.ai`; an open-source self-hosted option exists ([github.com/EverMind-AI/EverOS](https://github.com/EverMind-AI/EverOS)) but we use the cloud API — no local server to babysit on demo day, and EverMind is providing credits.
+EverOS is an agent memory layer: you feed it conversation messages (or documents), it asynchronously extracts structured "episodes" and atomic facts, and you retrieve them via semantic search. Two deployment options:
+
+- **EverOS Cloud** (managed, zero ops) — API at `https://api.evermind.ai`. **This is what we use** — decided and verified working (see below); no local server to babysit on demo day, and EverMind is providing credits.
+- **Open-source local runtime** ([github.com/EverMind-AI/EverOS](https://github.com/EverMind-AI/EverOS)) — local-first Python library; storage stack is Markdown (source of truth) + SQLite (state/queues) + LanceDB (vectors/BM25). Not our path, documented for completeness.
+
+Core mechanism worth knowing for the demo story: agent activity is recorded as **Cases**; repeated patterns get distilled into reusable **Skills** — procedural memory that improves over time instead of starting from scratch. EverOS also ships a Claude Code plugin marketplace, worth checking as a fast integration path.
+
+### Where it fits our architecture
+
+The policy's decision log is the natural integration point. `POLICY_DECISIONS` writes (tier selected, reason, evidence, agreement outcome) map onto EverOS Cases; if repeated patterns self-promote to Skills, that's a live, small-scale demonstration of the exact "production policy would be learned from expert labels and observed outcomes" answer already in `03_Judge_Questions.md` Tier 1.
+
+**Integration should be additive, not load-bearing** — the core routing logic doesn't need to run *through* EverOS, it just needs to *feed* it. Scope this as a few added lines in workbook tasks T6/T9, not a redesign.
 
 ### Auth
 
