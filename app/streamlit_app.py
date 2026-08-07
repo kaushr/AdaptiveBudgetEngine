@@ -120,10 +120,13 @@ div.dbe-field {{ margin: 6px 0 1px 0; }}
 .dbe-chip.bad {{ background: rgba(239,68,68,.16); border: 1px solid rgba(239,68,68,.5); }}
 .dbe-chip.good {{ background: rgba(34,197,94,.15); border: 1px solid rgba(34,197,94,.45); }}
 .dbe-chip.warn {{ background: rgba(250,204,21,.13); border: 1px solid rgba(250,204,21,.4); }}
-/* Subtle source chip, top right of the header */
-.dbe-src-chip {{ float: right; font-size: .8rem; color: {MUTED};
+/* Header right cluster: source chip + icon links */
+.dbe-hright {{ float: right; display: flex; gap: 14px; align-items: center; margin-top: 2px; }}
+.dbe-src-chip {{ font-size: .8rem; color: {MUTED};
                  background: rgba(154,164,178,.10); border: 1px solid rgba(154,164,178,.22);
-                 border-radius: 12px; padding: 3px 12px; margin-top: 4px; }}
+                 border-radius: 12px; padding: 3px 12px; }}
+.dbe-hlink {{ color: {MUTED}; display: inline-flex; }}
+.dbe-hlink:hover {{ color: #fff; }}
 /* Bill stack: reference (navy) with the adaptive counterpoint directly
    beneath — one comparison in a vertical sweep, top-aligned vs the amber. */
 .st-key-dbe_ref_card {{ background: #1a3d5c; border-radius: 8px; padding: 12px 14px; }}
@@ -223,12 +226,32 @@ COMPLEXITY_DEF = ("Complexity score = count of active risk signals (0–7) — n
 # Brand header — Intellinomics wordmark + lab line, source chip top right
 _src_label = ("Live from Snowflake · DECISION_BUDGET.DEMO" if _source() == "snowflake"
               else "Measured run · Snowflake Cortex · Aug 7")
+_GH_ICON = ("<svg width='20' height='20' viewBox='0 0 16 16' fill='currentColor'>"
+            "<path d='M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17"
+            ".55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-"
+            ".94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 "
+            "1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87"
+            ".31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 "
+            "1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92"
+            ".08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73"
+            ".54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 "
+            "8c0-4.42-3.58-8-8-8Z'/></svg>")
+_DECK_ICON = ("<svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>"
+              "<path d='M3 3h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-8v2.3l3 2.1-1.1 1.6"
+              "L12 21.2 9.1 23l-1.1-1.6 3-2.1V17H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Zm1 "
+              "2v10h16V5H4Zm3 3h10v2H7V8Zm0 3h6v2H7v-2Z'/></svg>")
 st.markdown(
     f"<div style='margin-bottom:2px'>"
     f"<span style='font-size:1.1rem;font-weight:800;letter-spacing:.14em;color:#5B8DEF'>INTELLINOMICS</span>"
     f"<span style='font-size:.95rem;color:{MUTED};margin-left:12px'>The Intelligence Economics Lab</span>"
+    f"<span class='dbe-hright'>"
     f"<span class='dbe-src-chip'>{_src_label}</span>"
-    f"</div>", unsafe_allow_html=True)
+    f"<a class='dbe-hlink' href='https://github.com/kaushr/AdaptiveBudgetEngine' "
+    f"target='_blank' title='Source on GitHub'>{_GH_ICON}</a>"
+    f"<a class='dbe-hlink' href='https://docs.google.com/presentation/d/"
+    f"1ZGSXyadmLO6h1Pr6oRAm5fYpoUOkc6KjbRppMW9RGH4/edit?usp=sharing' "
+    f"target='_blank' title='Slide deck'>{_DECK_ICON}</a>"
+    f"</span></div>", unsafe_allow_html=True)
 st.title("Decision Budget Engine")
 st.markdown(f"<div style='font-size:1.15rem;color:{MUTED};margin:-8px 0 6px 0'>"
             f"Optimizing AI reasoning one business decision at a time.</div>",
