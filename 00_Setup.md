@@ -214,13 +214,28 @@ snow sql -q "ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION'"
 ```
 (Broadens which regions can serve a model call — worth doing regardless.)
 
-### Confirmed working model names (tested Aug 6, 2026, this account)
+### Use `AI_COMPLETE`, not legacy `CORTEX.COMPLETE()` (verified Aug 6, 2026)
+
+Snowflake's newer AISQL functions are the current interface — `AI_COMPLETE` verified working with all three locked models on this account. **Use `AI_COMPLETE` everywhere;** `SNOWFLAKE.CORTEX.COMPLETE()` also works but is the legacy path.
 
 ```bash
-snow sql -q "SELECT SNOWFLAKE.CORTEX.COMPLETE('llama3.1-8b', 'Say OK')"
-snow sql -q "SELECT SNOWFLAKE.CORTEX.COMPLETE('mistral-large2', 'Say OK')"
-snow sql -q "SELECT SNOWFLAKE.CORTEX.COMPLETE('claude-sonnet-4-5', 'Say OK')"
+snow sql -q "SELECT AI_COMPLETE('llama3.1-8b', 'Say OK')"
+snow sql -q "SELECT AI_COMPLETE('mistral-large2', 'Say OK')"
+snow sql -q "SELECT AI_COMPLETE('claude-sonnet-4-5', 'Say OK')"
 ```
+
+**Findings from testing (don't re-test):**
+
+- **Model name must be a string literal.** `AI_COMPLETE(CASE tier WHEN ... END, prompt)` fails to compile (`needs to be a string literal`). Per-row routing in a single statement instead uses one branch per tier, unioned — the tier expression lives in the `WHERE`:
+  ```sql
+  SELECT opp_id, 'cheap' AS tier, AI_COMPLETE('llama3.1-8b', prompt) FROM opps WHERE tier='cheap'
+  UNION ALL
+  SELECT opp_id, 'balanced', AI_COMPLETE('mistral-large2', prompt) FROM opps WHERE tier='balanced'
+  UNION ALL
+  SELECT opp_id, 'premium', AI_COMPLETE('claude-sonnet-4-5', prompt) FROM opps WHERE tier='premium'
+  ```
+  Verified working. This is still the "per-row tier expression evaluated against columns already in the table" story from the judge prep — the routing predicate is SQL over business columns; only the model binding is per-branch.
+- **Token usage comes back in-band:** `AI_COMPLETE(model => '...', prompt => '...', show_details => TRUE)` returns JSON with `usage.prompt_tokens` / `completion_tokens` / `total_tokens` plus the model name — workbook T8 (usage capture) needs no separate mechanism.
 
 **Tier mapping locked in:**
 

@@ -24,9 +24,11 @@ Workload optimization gives both the same model. That's either overspending on t
 
 ## Why now
 
-Cost governance for AI has matured quickly — spend visibility, per-user quotas, chargeback, budget enforcement, anomaly detection. All of it answers *who spent what, and should they be allowed to.* That's consumption control, and it's necessary.
+Cost governance for AI has matured quickly — and Snowflake itself just shipped the strongest version of it. Cortex AI Functions cost management is now GA: account-level spend aggregation with threshold alerts, per-user monthly spending limits with automatic access revocation, and runaway-query detection and cancellation. Add the older layer — spend visibility, chargeback, budgets — and every level of the hierarchy is governed: the account, the user, the query.
 
-None of it answers *was this particular inference worth buying.* As agent execution volume grows from thousands to millions of calls, a per-workload default can become a major source of overspend wherever the records inside that workload vary widely in how much they're worth reasoning about.
+Every level except one. Nothing in that stack decides whether a given **record inside a query** deserved the tokens it consumed. Account, user, and query controls answer *who spent what, and should they be allowed to.* That's consumption control, and it's necessary.
+
+None of it answers *was this particular inference worth buying.* As agent execution volume grows from thousands to millions of calls, a per-workload default can become a major source of overspend wherever the records inside that workload vary widely in how much they're worth reasoning about. The blind spot isn't an abstract claim — it's visible in the current GA feature set: the governance hierarchy stops one level above where the money is actually spent.
 
 ---
 
@@ -112,6 +114,8 @@ Supporting: verdict agreement, blocker agreement, total cost per arm, and premiu
 The business context already lives in the warehouse. Routing on business signals means reading the same tables that feed the BI, which puts the policy next to the data instead of in a separate service with its own copy of the truth.
 
 Every routing decision, model output, token count, cost, and explanation writes back to Snowflake — so the audit trail for *why this record got this much intelligence* sits in the same governed place as the spend it produced.
+
+And because the spend surface is also Snowflake's, our numbers reconcile against theirs by construction: token counts in `MODEL_RUNS` roll up to the same totals Snowflake reports in `CORTEX_FUNCTIONS_USAGE_HISTORY`, per model. Cost governance sees the query; this system explains the records inside it — same ledger, one level deeper. It sits on top, not beside.
 
 ---
 

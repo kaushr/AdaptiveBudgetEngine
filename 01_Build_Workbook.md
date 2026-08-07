@@ -153,6 +153,21 @@ Frontier table columns: policy · threshold · **% routed cheap** · total cost 
 
 **Say aloud in the demo:** *"For this prototype, the premium model is our reference implementation, not truth. In production we'd evaluate against expert labels and actual business outcomes."*
 
+**Cost reconciliation (cheap, do it):** our measured token counts should agree with Snowflake's own cost surface by construction. After a run:
+
+```sql
+-- Ours (from show_details capture in MODEL_RUNS)
+SELECT model, SUM(input_tokens + output_tokens) AS our_tokens
+FROM MODEL_RUNS GROUP BY model
+-- Theirs (Snowflake's governed spend surface)
+-- SNOWFLAKE.ACCOUNT_USAGE.CORTEX_FUNCTIONS_USAGE_HISTORY: tokens + token_credits by model
+SELECT model_name, SUM(tokens) AS their_tokens, SUM(token_credits) AS credits
+FROM SNOWFLAKE.ACCOUNT_USAGE.CORTEX_FUNCTIONS_USAGE_HISTORY
+WHERE function_name ILIKE '%COMPLETE%' GROUP BY model_name;
+```
+
+View verified queryable on our account. **Caveat: ACCOUNT_USAGE lags up to a few hours** — run Friday's reconciliation against the morning's calls, not the run you just finished; don't demo it live expecting instant agreement. If numbers match (ours ⊆ theirs for the run window), say so in one line: routing decisions and their spend live in the same ledger.
+
 ---
 
 ## 7. Risks
