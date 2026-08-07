@@ -24,6 +24,7 @@ import time
 from dataset import OPPORTUNITIES, FLAGS, complexity_score
 from policy import route, CHEAP, PREMIUM
 from pricing import TIER_MODEL, call_credits
+import term
 
 RESULTS_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "results"))
 CACHE_PATH = os.path.join(RESULTS_DIR, "call_cache.json")
@@ -146,14 +147,15 @@ def run_call(record, tier, cache, verbose=False, full_prompts=False, header=""):
     if key in cache and not cache[key].get("error"):
         if verbose:
             c = cache[key]
-            print(f"{header} {record['opp_id']} · tier={tier} · {c['model']} — cached ✓ "
-                  f"({c['verdict']} / {c['primary_blocker']})")
+            print(term.dim(f"{header} {record['opp_id']} · tier={tier} · {c['model']} — cached ✓ "
+                           f"({c['verdict']} / {c['primary_blocker']})"))
         return cache[key]
     model = TIER_MODEL[tier]
     prompt = build_prompt(record)
     result = {"opp_id": record["opp_id"], "tier": tier, "model": model}
     if verbose:
-        print(f"{header} {record['opp_id']} · tier={tier} · {model}")
+        print(term.RULE)
+        print(term.bold(f"{header} {record['opp_id']} · tier={tier} · {model}"))
         print("  prompt →")
         _print_prompt(prompt, full_prompts)
     attempts, last_err = 0, None
@@ -170,9 +172,11 @@ def run_call(record, tier, cache, verbose=False, full_prompts=False, header=""):
             credits = call_credits(model, usage.get("prompt_tokens", 0),
                                    usage.get("completion_tokens", 0))
             if verbose:
-                print(f"  ✓ valid (attempt {attempts}) · in={usage.get('prompt_tokens', 0)} "
-                      f"out={usage.get('completion_tokens', 0)} · ${credits * 3:.4f} "
-                      f"({credits:.6f} cr) · {wall_ms / 1000:.1f}s")
+                print("  " + term.green(f"✓ valid (attempt {attempts})") + "  ·  "
+                      f"in={usage.get('prompt_tokens', 0):<5} "
+                      f"out={usage.get('completion_tokens', 0):<5} "
+                      f"cost=${credits * 3:.4f} ({credits:.6f} cr)  "
+                      f"latency={wall_ms / 1000:.1f}s")
             result.update(
                 input_tokens=usage.get("prompt_tokens", 0),
                 output_tokens=usage.get("completion_tokens", 0),
@@ -185,11 +189,11 @@ def run_call(record, tier, cache, verbose=False, full_prompts=False, header=""):
         except (ValueError, RuntimeError, KeyError, json.JSONDecodeError) as e:
             last_err = str(e)[:300]
             if verbose:
-                print(f"  ✗ retry {attempts}: {last_err}")
+                print("  " + term.amber(f"✗ retry {attempts}: {last_err}"))
             prompt_retry = prompt + "\n\nIMPORTANT: your previous response was invalid (" + last_err + "). Output ONLY the JSON object with the exact enum values listed."
             prompt = prompt_retry
     if verbose:
-        print(f"  ✗ ERROR RECORD after {attempts} attempts: {last_err}")
+        print("  " + term.red(f"✗ ERROR RECORD after {attempts} attempts: {last_err}"))
     result.update(input_tokens=0, output_tokens=0, credits=0.0, latency_ms=0,
                   attempts=attempts, error=last_err,
                   verdict=None, primary_blocker=None,
@@ -237,8 +241,9 @@ def main():
                        full_prompts=args.full_prompts, header=header)
         spend += res["credits"]
         if args.verbose:
-            print(f"  running total: {i+1}/{len(todo)} calls · spend so far: "
-                  f"${spend * 3:.4f} ({spend:.6f} cr)\n")
+            print(term.cyan(term.bold(
+                f"  ▸ running total: {i+1}/{len(todo)} calls · spend so far: "
+                f"${spend * 3:.4f} ({spend:.6f} cr)")) + "\n")
         else:
             status = f"ERROR: {res['error']}" if res["error"] else \
                 f"{res['verdict']} / {res['primary_blocker']} ({res['input_tokens']}+{res['output_tokens']} tok, {res['latency_ms']}ms)"

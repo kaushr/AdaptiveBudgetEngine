@@ -29,6 +29,7 @@ import run_arms  # noqa: E402
 import summarize  # noqa: E402
 import load_snowflake  # noqa: E402
 import everos_log  # noqa: E402
+import term  # noqa: E402
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 RESULTS = os.path.join(ROOT, "data", "results")
@@ -37,7 +38,11 @@ TABLES = ["OPPORTUNITIES", "MODEL_RUNS", "POLICY_DECISIONS", "RUN_SUMMARY", "HER
 
 
 def banner(title):
-    print(f"\n{'=' * 70}\n  {title}\n{'=' * 70}")
+    print(term.cyan(f"\n{term.HEAVY}\n  {term.bold(title)}\n{term.HEAVY}"))
+
+
+def ok(msg):
+    print(term.green(f"✓ {msg}"))
 
 
 def snow(sql):
@@ -61,12 +66,12 @@ def stage_wipe(quiet):
               f"→ {os.path.relpath(BACKUP, ROOT)}  (git has them too)")
     for t in TABLES:
         snow(f"DROP TABLE IF EXISTS DECISION_BUDGET.DEMO.{t}")
-        print(f"DROP TABLE IF EXISTS {t} ✓")
+        ok(f"DROP TABLE IF EXISTS {t}")
     for f in sorted(glob.glob(os.path.join(RESULTS, "*.csv")) +
                     glob.glob(os.path.join(RESULTS, "*.json")) +
                     glob.glob(os.path.join(RESULTS, "*.sql"))):
         os.remove(f)
-        print(f"deleted {os.path.relpath(f, ROOT)} ✓")
+        ok(f"deleted {os.path.relpath(f, ROOT)}")
     print("NOT deleted: scripts/dataset.py (authored source), data/opportunities.csv "
           "(authored input), data/SCHEMA.md, docs.")
 
@@ -86,8 +91,9 @@ def stage_calls(quiet, full_prompts):
                                 full_prompts=full_prompts,
                                 header=f"[call {i + 1}/{len(todo)}]")
         spend += res["credits"]
-        line = (f"  running total: {i + 1}/{len(todo)} calls · spend so far: "
-                f"${spend * 3:.4f} · elapsed {int(time.time() - t0)}s")
+        line = term.cyan(term.bold(
+            f"  ▸ running total: {i + 1}/{len(todo)} calls · spend so far: "
+            f"${spend * 3:.4f} · elapsed {int(time.time() - t0)}s"))
         print(line + ("\n" if not quiet else ""), flush=True)
         if res["error"]:
             print(f"  !! error record for {oid}|{tier} — will surface in scoring")
@@ -116,7 +122,7 @@ def stage_load(quiet):
     rows = snow(" UNION ALL ".join(
         f"SELECT '{t}' AS T, COUNT(*) AS N FROM DECISION_BUDGET.DEMO.{t}" for t in TABLES))
     for r in rows:
-        print(f"  {r['T']} ← {r['N']} rows ✓")
+        ok(f"  {r['T']} ← {r['N']} rows")
     expected = {"OPPORTUNITIES": 30, "MODEL_RUNS": 120, "POLICY_DECISIONS": 90,
                 "RUN_SUMMARY": 4, "HEROES": 3}
     got = {r["T"]: int(r["N"]) for r in rows}
@@ -148,10 +154,11 @@ def stage_everos(quiet):
 
 def stage_compare(quiet):
     banner("STAGE 6/6 — VERIFY + COMPARE vs committed numbers")
-    # fresh timestamps from Snowflake's own metadata
+    # fresh timestamps from Snowflake's own metadata. INFORMATION_SCHEMA is
+    # database-level — DECISION_BUDGET.INFORMATION_SCHEMA, never inside DEMO.
     rows = snow("SELECT table_name, created, last_altered FROM "
-                "DECISION_BUDGET.DEMO.INFORMATION_SCHEMA.TABLES "
-                "WHERE table_schema='DEMO' ORDER BY table_name")
+                "DECISION_BUDGET.INFORMATION_SCHEMA.TABLES "
+                "WHERE table_schema = 'DEMO' ORDER BY table_name")
     for r in rows:
         print(f"  {r['TABLE_NAME']}: created {r['CREATED']}")
 
@@ -170,7 +177,7 @@ def stage_compare(quiet):
     new_route = {(d["threshold"], d["opp_id"]): d["tier"]
                  for d in load_csv(os.path.join(RESULTS, "policy_decisions.csv"))}
     assert old_route == new_route, "ROUTING DRIFTED — policy or dataset changed, investigate"
-    print("\nrouting: identical across all thresholds ✓ (deterministic policy, unchanged records)")
+    print(term.green(term.bold("\nrouting: identical across all thresholds ✓ (deterministic policy, unchanged records)")))
 
     # Conclusions MAY drift (LLMs at temp 0 are near- but not perfectly deterministic)
     print("\nfrontier — new vs committed:")
@@ -183,7 +190,7 @@ def stage_compare(quiet):
                              ("pct_cheap", "% cheap")):
             same = o[field] == n[field]
             drift |= not same
-            mark = "✓ unchanged" if same else f"→ DRIFTED (was {o[field]})"
+            mark = term.green("✓ unchanged") if same else term.red(f"→ DRIFTED (was {o[field]})")
             print(f"  t={key[1]} {label}: {n[field]} {mark}")
     old_runs = {r["run_id"]: r for r in load_csv(os.path.join(BACKUP, "model_runs.csv"))}
     new_runs = {r["run_id"]: r for r in load_csv(os.path.join(RESULTS, "model_runs.csv"))}
@@ -201,25 +208,38 @@ def stage_compare(quiet):
               "language/consistency sweep, and commit the new results CSVs.")
     else:
         print("\nno conclusion flips — every record's verdict/blocker matches the committed run")
+    print(term.HEAVY)
     if not drift:
-        print("\nRESULT: numbers identical to committed run — script and screen already agree ✓")
+        print(term.green(term.bold("  RESULT: numbers identical to committed run — script and screen already agree ✓")))
     else:
-        print("\nRESULT: DRIFT detected — see above; demo script must match the screen exactly")
+        print(term.red(term.bold("  RESULT: DRIFT detected — see above; demo script must match the screen exactly")))
+    print(term.HEAVY)
+
+
+STAGES = {
+    "wipe": lambda a: stage_wipe(a.quiet),
+    "calls": lambda a: stage_calls(a.quiet, a.full_prompts),
+    "score": lambda a: stage_score(a.quiet),
+    "load": lambda a: stage_load(a.quiet),
+    "everos": lambda a: stage_everos(a.quiet),
+    "compare": lambda a: stage_compare(a.quiet),
+}
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--quiet", action="store_true", help="banners and outcomes only")
     ap.add_argument("--full-prompts", action="store_true")
+    ap.add_argument("--stage", choices=list(STAGES), action="append",
+                    help="run only the named stage(s), in the order given — "
+                         "salvage a partial failure without redoing model calls, "
+                         "e.g. --stage compare")
     args = ap.parse_args()
     t0 = time.time()
-    stage_wipe(args.quiet)
-    stage_calls(args.quiet, args.full_prompts)
-    stage_score(args.quiet)
-    stage_load(args.quiet)
-    stage_everos(args.quiet)
-    stage_compare(args.quiet)
-    print(f"\nrebuild complete in {int((time.time() - t0) / 60)}m{int(time.time() - t0) % 60}s")
+    for name in (args.stage or list(STAGES)):
+        STAGES[name](args)
+    print(f"\nrebuild {'stages ' + ','.join(args.stage) if args.stage else 'complete'} "
+          f"in {int((time.time() - t0) / 60)}m{int(time.time() - t0) % 60}s")
 
 
 if __name__ == "__main__":

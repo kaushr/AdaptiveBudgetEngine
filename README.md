@@ -16,10 +16,10 @@ no judge model. 61 unique model calls; every number below is from the run.
 
 | operating point | % routed cheap | total cost ($) | vs reference | decisions changed | verdict agreement |
 |---|---|---|---|---|---|
-| 0.98 · Conservative | 13% | 0.1145 | 53% | **4 of 30** | 90% |
-| 0.95 · Balanced | 20% | 0.1088 | 51% | 6 of 30 | 83% |
-| 0.90 · Savings-oriented | 30% | 0.0961 | 45% | 9 of 30 | 77% |
-| Reference (1.00) | 0% | 0.2149 | 100% | — | — |
+| 0.98 · Conservative | 13% | 0.1147 | 53% | **4 of 30** | 90% |
+| 0.95 · Balanced | 20% | 0.1090 | 51% | 6 of 30 | 83% |
+| 0.90 · Savings-oriented | 30% | 0.0962 | 45% | 9 of 30 | 77% |
+| Reference (1.00) | 0% | 0.2152 | 100% | — | — |
 
 One threshold varies; all other policy logic held constant. The output is a
 frontier an enterprise tunes to its risk tolerance — not a single correct

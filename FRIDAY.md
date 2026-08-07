@@ -36,16 +36,31 @@ the first build-block task.
    calls with full narration, rescores, reloads Snowflake, re-logs EverOS, and
    diffs the new numbers against the committed run — flagging any drift the
    demo script would need to absorb. Add `--quiet` for a terse rerun.
+   **Known behaviors, not failures:** EverOS flush may report `no_extraction`
+   once before succeeding on a retry — expected async extraction, the script
+   retries automatically. OPP-008's cheap-tier blocker is bistable across runs
+   (COMPETITION vs SECURITY_LEGAL), so the 0.90 changed-count prints 8 or 9 —
+   if the final RESULT block flags drift, sync the two spoken numbers before
+   rehearsing: Beat 4's frontier recital in the demo script, and the waste-card
+   question ("...when N decisions changed") in the judge doc. 0.98/0.95 have
+   been stable across all runs. **If a stage fails partway:** stages are
+   independently runnable — fix, then resume without re-burning model calls,
+   e.g. `cd scripts && python3 rebuild.py --stage load --stage everos --stage compare`
+   (calls are cached; even `--stage calls` re-spends nothing that succeeded).
    If venue WiFi fights: `git checkout -- data/results/` restores the offline
    fallback, and the demo needs nothing live.
 1. **Rehearse 3× under 2:45** ([05_Demo_Script.md](05_Demo_Script.md)) — the only
    open workbook exit item. Full script is 2:43 at 135 wpm (zero slack); rehearse
    the compressed version (2:23) at least once. Time every run.
 2. **EverOS on venue WiFi:** run
-   `cd scripts && python3 everos_log.py --search "OPP-013 routing decision"` —
-   confirm retrieval works from the venue. If it doesn't: the Aug 6 retrieval
-   output is committed in the session history — screenshot fallback, and say so
-   plainly if asked.
+   ```bash
+   python3 scripts/everos_log.py --search "OPP-008"
+   ```
+   — confirm retrieval works from the venue. This exact command is also the
+   Q&A response to "do you actually use EverOS?" (showing retrieval beats
+   describing it — see the script's Q&A appendix). It fails gracefully with a
+   one-line message if offline; if the venue blocks it, say so plainly and
+   fall back to describing the logged sessions.
 3. **Demo machine setup — launch BOTH, present from live:** run
    `./demo-offline.sh` (port 8501, tab "DBE · OFFLINE") and `./demo-live.sh`
    (port 8502, tab "DBE · LIVE") in two terminals at setup. Click through the
