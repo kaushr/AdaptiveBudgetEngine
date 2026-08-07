@@ -350,7 +350,7 @@ Core mechanism worth knowing for the demo story: agent activity is recorded as *
 
 ### Where it fits our architecture
 
-The policy's decision log is the natural integration point. `POLICY_DECISIONS` writes (tier selected, reason, evidence, agreement outcome) map onto EverOS Cases; if repeated patterns self-promote to Skills, that's a live, small-scale demonstration of the exact "production policy would be learned from expert labels and observed outcomes" answer already in `03_Judge_Questions.md` Tier 1.
+The policy's decision log is the natural integration point. `POLICY_DECISIONS` writes (tier selected, reason, evidence, whether the arms' conclusions agreed) map onto EverOS Cases; if repeated patterns self-promote to Skills, that's a live, small-scale demonstration of the exact "production policy would be learned from expert labels and observed outcomes" answer already in `03_Judge_Questions.md` Tier 1.
 
 **Integration should be additive, not load-bearing** — the core routing logic doesn't need to run *through* EverOS, it just needs to *feed* it. Scope this as a few added lines in workbook tasks T6/T9, not a redesign.
 

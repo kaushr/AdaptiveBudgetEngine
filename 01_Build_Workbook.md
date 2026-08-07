@@ -143,6 +143,7 @@ return BALANCED
 - Say **changed**, never **improved** or **benefited**. Changed is measured. Improved is not.
 - Every number on screen comes from a run. If agreement is 88%, show 88%.
 - **No LLM-as-judge anywhere in scoring, by design.** A judge model would make the headline number carry a second model's biases and hand judges the "AI grading AI" attack. Exact match on contractually-forced enums is reproducible by anyone with the two output tables.
+- **Conclusions vs outcomes.** The arms reach *conclusions* (verdict, blocker); deals have *outcomes* (closed, stalled, died) — reserve "outcome" for the real world. The metric counts records where conclusions differ, symmetrically: neither arm is a baseline-of-truth the other deviated from.
 
 **Frontier:** vary `high_confidence_threshold` **only** — 0.98 / 0.95 / 0.90, labelled Conservative / Balanced / Savings-Oriented. Hold `complexity_threshold` and every other rule constant. Two dials moving at once means you can't attribute the change to either.
 

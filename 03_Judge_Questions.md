@@ -4,6 +4,8 @@ Read the morning of. Answer in two or three sentences and stop talking. Over-exp
 
 **Three things to never say:** that the premium model is correct, that the changed decisions were better, or a number you didn't measure.
 
+**Vocabulary rule:** the arms reach **conclusions** (verdict, blocker); deals have **outcomes** (closed, stalled, died). Canonical phrasing for the metric: *"on 5 of 30 records, the cheap and premium tiers reach different conclusions."* Note the symmetry — neither arm changed the other's answer; both answered independently and the answers differ. Never use wording that implies the adaptive arm deviated from a baseline-of-truth.
+
 ---
 
 ## The elevator framing (for non-technical judges)
@@ -18,7 +20,7 @@ A manager with 30 deals hires an expensive consultant to review every one, every
 
 ### "Isn't this just an if statement?"
 
-Today, deliberately — every routing decision has to be explainable and auditable. The interesting part isn't the branching, it's what the branches key on. In production the policy would be learned from expert labels and observed outcomes rather than hand-set.
+Today, deliberately — every routing decision has to be explainable and auditable. The interesting part isn't the branching, it's what the branches key on. In production the policy would be learned from expert labels and observed outcomes rather than hand-set. The labels do double duty: the same expert labels that score the arms are training signal for the router — if records with a given signature (say, high complexity + departed champion) reliably favor premium, the policy learns to send that signature premium.
 
 *Don't get defensive. The simplicity is a feature and you should sound like you chose it.*
 
@@ -91,7 +93,7 @@ Two enums are the deliberately minimal contract that makes agreement a `!=`. Pro
 Correct — concede immediately. Agreement measures consistency between arms, not correctness; if the premium arm is wrong, high agreement means faithfully reproducing wrongness at lower cost. Then the three-layer path:
 
 - **Layer 1 (this demo): consistency.** Exact-match on enums. All we claim. The premium arm is a reference implementation, not truth.
-- **Layer 2 (expert labels): accuracy.** Managers review outputs blind to which arm produced them, marked right/wrong. Measures accuracy per arm, not just agreement. Available immediately, expensive per label. This is how you validate the premium arm deserves to be the reference at all.
+- **Layer 2 (expert labels): accuracy.** Managers review outputs blind to which arm produced them, marked right/wrong. Blind rating does two distinct jobs: on the ~25 *agreeing* records, labels test whether the consensus is right — whether the premium arm deserves to be the reference at all; on the ~5 *disagreeing* records, labels adjudicate which arm won each disagreement. Only after adjudication does "5 differ" become "N better, M worse" — the one construction where "improved" is earned. Volunteer the honest possibility that the cheap arm wins some adjudications (small models can be less prone to overthinking clean signals) — a finding the unlabeled demo cannot see, and a good faith-marker. Available immediately, expensive per label.
 - **Layer 3 (outcomes over time).** Track whether the recommended action was taken and whether the flagged blocker materialized — NOT closed-won alone, since deals close despite bad advice and die despite good advice; outcome labels need intermediate signals to be attributable. Slow, noisy, free, unlimited.
 
 **The kicker:** with those labels, "changed" becomes "improved," and the same frontier becomes an optimization instead of a setting — the measurement scaffolding in this demo is the same scaffolding the real system trains on. Nothing is thrown away; the labels get better.
