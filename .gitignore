@@ -1,0 +1,16 @@
+# Local-only files (handoff notes, scratch) — not for the remote
+local/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Secrets / credentials — never commit
+*.p8
+*.pem
+.env
+
+# OS
+.DS_Store
