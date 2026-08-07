@@ -30,7 +30,7 @@ CREATE OR REPLACE TABLE MODEL_RUNS (
 CREATE OR REPLACE TABLE POLICY_DECISIONS (
   opp_id STRING, policy STRING, threshold FLOAT, complexity_score NUMBER,
   probability FLOAT, strategic_account BOOLEAN, tier STRING, reason STRING,
-  evidence STRING, changed_vs_reference BOOLEAN
+  evidence STRING, changed_vs_reference BOOLEAN, consequential BOOLEAN
 );
 CREATE OR REPLACE TABLE RUN_SUMMARY (
   policy STRING, threshold FLOAT, total_credits FLOAT, total_dollars FLOAT,
@@ -38,7 +38,7 @@ CREATE OR REPLACE TABLE RUN_SUMMARY (
   cheap_credits FLOAT, balanced_credits FLOAT, premium_credits FLOAT,
   decisions_changed NUMBER, verdict_agreement_pct FLOAT, blocker_agreement_pct FLOAT,
   waste_records STRING, waste_count NUMBER, waste_credits FLOAT, waste_dollars FLOAT,
-  cost_vs_reference_pct FLOAT
+  cost_vs_reference_pct FLOAT, projected_10k_weekly_dollars FLOAT
 );
 """
 

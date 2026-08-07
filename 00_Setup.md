@@ -12,7 +12,8 @@ Last updated: Aug 6, 2026 (Kaushik's machine, verified working end to end — Sn
 
 - **Track we're entering: Track 1 — "Cost of Intelligence" (cheaper AI execution)** — direct fit for Decision Budget Engine. (Other tracks: Value of Intelligence, Wildcard.)
 - **Requirement: every team must build with EverMind infrastructure** — *"using EverOS for memory, personalization, context, or learning layers, while leveraging Snowflake."* This was missed in initial planning and only caught when we read the event page directly. **Treat the event page as the source of truth — re-read it end to end before Friday; don't rely on secondhand summaries.** See §12 for our verified EverOS setup.
-- **Schedule:** 9:00 check-in → 10:00–11:00 workshops → 11:00–4:00 build (lunch at 12) → 4:00–5:00 demos (**3-minute limit**) → 5:00 voting/awards. The workbook timeline (11:00 start, 2:30 hard stop, 2:45 demo target) maps onto this.
+- **Schedule:** 9:00 check-in → 10:00–11:00 workshops → 11:00–4:00 build (lunch at 12) → 4:00–5:00 demos (**3-minute limit**) → 5:00 voting/awards. The workbook timeline (11:00 start, 2:30 hard stop, 2:45 demo target) maps onto this. **Hard submission deadline: 4:00 PM.**
+- **Re-read verified (Aug 6):** no required or provided datasets — prepared synthetic data is fine. Track 1 judging wants **measurable cost-reduction percentages** (we have them, measured). Exact requirement wording: *"use EverOS as part of the agent's memory, personalization, context, or learning layer, while leveraging Snowflake to build, operate, or analyze the token economy behind the product"* — our EverOS decision log covers the memory/learning layer, and the token/cost accounting in `MODEL_RUNS`/`RUN_SUMMARY` is Snowflake analyzing the token economy.
 - **Prizes:** $600 / $500 / $400 + $200 standout (with UpScaleX 1:1).
 - **Partner credits:** Snowflake (Cortex access + credits), EverMind (EverOS credits + engineering support).
 
@@ -328,10 +329,10 @@ If it routes through the plugin → `cortex` CLI → your connection and returns
 - [ ] Function Studio availability — ask in event Discord
 - [x] ~~Repo scaffold + fallback table mechanism~~ — done; `data/results/*.csv` is the offline fallback, `DBE_SOURCE` flag switches the UI to Snowflake.
 - [x] ~~UI framework decision~~ — Streamlit confirmed and built (`app/streamlit_app.py`, venv at `.venv/` on Python 3.11 — do NOT use the pyenv 3.8 shim, it's too old for Streamlit).
-- [ ] **EverOS integration depth** — confirm how "deep" the integration needs to be to satisfy the requirement (logging Cases may be enough — or judges may expect visible Skills/learning behavior in the demo). Ask in event Discord, alongside the Function Studio question; EverMind is offering engineering support, so there may be a sanctioned low-lift path.
-- [ ] **Test the EverOS Claude Code plugin** as a fast integration path (see §12).
+- [x] ~~EverOS integration~~ — **built** (`scripts/everos_log.py`): all 30 routing decisions at the 0.98 operating point logged to EverOS (signals in, tier out, agreement result), extraction flushed, retrieval demonstrated by search. Cloud API has no direct Case-ingestion endpoint — decisions go in as structured messages; Cases/Skills are EverOS's own distillation of them. Still worth asking in Discord whether judges expect visible Skills behavior, but the mandatory box is checked.
+- [ ] Ask in Discord (nice-to-have): Function Studio availability; whether EverOS judges expect visible Skills/learning behavior beyond a retrievable decision log.
 
-*(Resolved: Cloud vs local runtime — Cloud, tested end to end Aug 6. Integration point — `POLICY_DECISIONS` → Cases, additive not load-bearing. See §12.)*
+*(Resolved: Cloud vs local runtime — Cloud, tested end to end Aug 6. Integration point — `POLICY_DECISIONS` → decision log, additive not load-bearing. See §12.)*
 
 ---
 

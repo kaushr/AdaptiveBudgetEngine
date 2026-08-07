@@ -122,6 +122,9 @@ with beat1:
         st.caption(f"Adaptive at {threshold:.2f} decomposes: "
                    f"cheap ${row.cheap_credits * 3:.4f} · balanced ${row.balanced_credits * 3:.4f} · "
                    f"premium ${row.premium_credits * 3:.4f}")
+        st.caption(f"At 10,000 records/week: **${ref.projected_10k_weekly_dollars:.2f} → "
+                   f"${row.projected_10k_weekly_dollars:.2f}** "
+                   f"(projected from measured per-record cost)")
     with b2:
         st.markdown(
             f"<div style='background:#7a5200;border-radius:8px;padding:14px'>"
@@ -165,7 +168,8 @@ with st.expander("All 30 records"):
     dec = decisions[decisions.threshold.astype(float) == threshold]
     opps = data["opportunities"]
     table = (opps[["opp_id", "amount", "probability"]]
-             .merge(dec[["opp_id", "complexity_score", "tier", "changed_vs_reference"]], on="opp_id")
+             .merge(dec[["opp_id", "complexity_score", "tier", "changed_vs_reference",
+                         "consequential"]], on="opp_id")
              .merge(reference[["opp_id", "verdict", "primary_blocker"]]
                     .rename(columns={"verdict": "ref_verdict", "primary_blocker": "ref_blocker"}), on="opp_id")
              .merge(adaptive[["opp_id", "verdict", "primary_blocker"]]

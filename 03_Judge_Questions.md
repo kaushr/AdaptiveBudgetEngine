@@ -78,6 +78,10 @@ Right, but the customer should still see one control. They can't reason about tw
 
 Three stages. Sweep the parameter grid offline against a labeled sample and let the customer pick a point. Recalibrate periodically, because the frontier moves as data drifts. Then learn online from outcomes. Most of the value is in stage one — plenty of systems never need stage three.
 
+### "Why only three models / three tiers?"
+
+A tier is a price-quality point on an ordered ladder, not a model family. Production ladders can mix different models, the same model at different reasoning-effort budgets (increasingly the natural knob — one model with adjustable reasoning gives a smooth ladder with consistent style), or different context strategies. The policy is agnostic to what populates the ladder — it only needs tiers ordered by cost. More tiers is more thresholds, same logic; three is a demo choice, not an architectural limit.
+
 ### "Why only two enum fields? Real decisions are richer."
 
 Two enums are the deliberately minimal contract that makes agreement a `!=`. Production returns a richer per-record mix, each scored by type: more enums (action category, escalation level) by exact match; numerics (days-to-close, discount ceiling) by tolerance bands; extracted facts (named economic buyer) by lookup against the CRM; free text shown to humans, not auto-scored. The generalizing principle: structure the output so agreement is computable — the frontier machinery follows from that, regardless of field count.
@@ -99,6 +103,14 @@ Correct — concede immediately. Agreement measures consistency between arms, no
 **The kicker:** with those labels, "changed" becomes "improved," and the same frontier becomes an optimization instead of a setting — the measurement scaffolding in this demo is the same scaffolding the real system trains on. Nothing is thrown away; the labels get better.
 
 **EverMind tie-in (one line):** Layer 3 is the EverOS integration — Cases record decision + evidence + eventual outcome; Skills are the patterns learned from them. The event's required infrastructure is the memory substrate for exactly this loop.
+
+### "Two of your changed records are dead deals — doesn't that inflate the number?"
+
+Concede the composition openly: 4 changed at Conservative, of which 2 are disagreements without consequence and 2 are live — and the drill-down table shows which is which (`consequential` column). The two dead deals (p ≤ 0.10) changed because the cheap model keeps calling a dead deal AT_RISK where premium says NO_ACTION_NEEDED — a conclusion disagreement on records where the action is already determined, which is precisely why the policy routed them cheap: an error there has no room to change what anyone does Monday. This is the "we route cheap on settled decisions specifically" answer, demonstrated live in the measured run.
+
+### "What did you learn building this?"
+
+Small models need contracts written as procedures, not descriptions — llama ignored adjective-based verdict rules until we restructured them as a numbered decision procedure, applied identically to both arms so the measurement stayed valid. The interesting engineering in per-record routing is the task contract, not the routing.
 
 ### "Couldn't the cheap model be wrong on the deals you routed cheap, and you'd never know?"
 

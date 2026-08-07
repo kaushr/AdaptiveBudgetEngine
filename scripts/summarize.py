@@ -67,6 +67,9 @@ def main():
         "blocker_agreement_pct": 100.0,
         "waste_records": "", "waste_count": 0, "waste_credits": 0.0, "waste_dollars": 0.0,
         "cost_vs_reference_pct": 100.0,
+        # linear projection of measured per-record cost; always labeled
+        # "projected" wherever displayed (workbook section 6 rule)
+        "projected_10k_weekly_dollars": ref_credits * DOLLARS_PER_CREDIT * 10000 / 30,
     })
 
     for t in THRESHOLDS:
@@ -97,6 +100,8 @@ def main():
                                "policy": "adaptive", "threshold": t,
                                "tier": tier, "model": TIER_MODEL[tier],
                                **{k: c[k] for k in ANSWER_FIELDS}})
+            is_changed = oid in changed
+            in_veto_band = r["probability"] >= t or r["probability"] <= 0.10
             policy_decisions.append({
                 "opp_id": oid, "policy": "adaptive", "threshold": t,
                 "complexity_score": complexity_score(r),
@@ -104,7 +109,10 @@ def main():
                 "strategic_account": r["strategic_account"],
                 "tier": tier, "reason": reason,
                 "evidence": json.dumps(evidence),
-                "changed_vs_reference": oid in changed,
+                "changed_vs_reference": is_changed,
+                # changed on a record whose action is NOT already determined
+                # by a certainty veto (settled or lost band)
+                "consequential": is_changed and not in_veto_band,
             })
 
         total = sum(tier_credits.values())
@@ -124,6 +132,7 @@ def main():
             "waste_credits": waste_credits,
             "waste_dollars": waste_credits * DOLLARS_PER_CREDIT,
             "cost_vs_reference_pct": round(100 * total / ref_credits, 1),
+            "projected_10k_weekly_dollars": total * DOLLARS_PER_CREDIT * 10000 / 30,
         })
         print(f"t={t}: changed={len(changed)} {sorted(changed)}")
 
