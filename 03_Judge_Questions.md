@@ -114,7 +114,9 @@ Correct — concede immediately. Agreement measures consistency between arms, no
 
 ### "Two of your changed records are dead deals — doesn't that inflate the number?"
 
-Concede the composition openly: 4 changed at Conservative, of which 2 are disagreements without consequence and 2 are live — and the drill-down table shows which is which (`consequential` column). The two dead deals (p ≤ 0.10) changed because the cheap model keeps calling a dead deal AT_RISK where premium says NO_ACTION_NEEDED — a conclusion disagreement on records where the action is already determined, which is precisely why the policy routed them cheap: an error there has no room to change what anyone does Monday. This is the "we route cheap on settled decisions specifically" answer, demonstrated live in the measured run.
+Concede the composition openly: 4 changed at Conservative, of which 2 are disagreements without consequence and 2 are live — and the drill-down table shows which is which (`consequential` column). The two dead deals (p ≤ 0.10) changed because the cheap model keeps calling a dead deal AT_RISK where premium says NO_ACTION_NEEDED.
+
+Then the pivot — note the **direction** of the logic: those records were routed cheap precisely because nothing can change what happens to them. A cheap-model error there is a disagreement with no blast radius. The certainty veto doesn't just save money on settled records; it routes cheap exactly where being wrong is safest — and the consequential column demonstrates that with data. Concession first, then this: it turns the composition of the 4 from a weakness admitted into a design property proven, found in the measured run rather than designed in.
 
 ### "What did you learn building this?"
 

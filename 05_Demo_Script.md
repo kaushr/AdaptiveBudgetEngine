@@ -43,8 +43,13 @@ Screen state at start: slider at **0.98 · Conservative**, hero selector on
 
 ## Q&A armor (ready, not in the flow)
 
-**Dead deals** — *"Two of your changed records are dead deals."*
-> Correct — 4 changed at Conservative: two live, two on already-lost deals where the cheap tier keeps saying AT_RISK about a deal that's already dead. Disagreements without consequence, on records routed cheap precisely because nothing anyone does Monday changes them — the drill-down's `consequential` column shows which is which.
+**Dead deals** — *"Two of your changed records are dead deals."* Two moves: concede the composition, then pivot to the design property. (~20s)
+> Correct — two of the four are dead deals, marked not-consequential in the drill-down. But note the direction: they were routed cheap precisely because nothing can change what happens to them — an error there has no blast radius. The veto routes cheap exactly where being wrong is safest, and the column proves it with data.
+
+**Same question, non-technical judge** (~15s):
+> The junior analyst and the consultant disagreeing about a dead deal changes nobody's Monday. Disagreeing about a live deal changes who the rep calls tomorrow. Consequential marks the second kind — and only two of our four disagreements are that kind.
+
+*If anyone touches the 4-of-30, this is the best sixty seconds of the day: an unplanned finding that became evidence the veto works. Have it in your mouth, not just on this page.*
 
 Everything else: `03_Judge_Questions.md`. Re-read it the morning of.
 
