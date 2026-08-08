@@ -1,0 +1,5 @@
+{
+  "//": "Pinned deliberately: with this file present, GitHub's Codespaces flow (the pencil icon on the hosted app) uses it instead of auto-committing a generated one to the repo.",
+  "name": "AdaptiveBudgetEngine",
+  "image": "mcr.microsoft.com/devcontainers/universal:2"
+}
